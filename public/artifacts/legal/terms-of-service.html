@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service — Credit Wizard AI</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 1.5cm 2cm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #0f1117;
+      color: #e8eaf0;
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 10pt;
+      line-height: 1.7;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+
+    /* ── Header ── */
+    .doc-header {
+      border-bottom: 2px solid #2d3148;
+      padding-bottom: 28px;
+      margin-bottom: 40px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #6c63ff 0%, #a78bfa 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .brand-name {
+      font-size: 22pt;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-tagline {
+      font-size: 8pt;
+      color: #6b7194;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .doc-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .doc-title-block h1 {
+      font-size: 18pt;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .doc-title-block .subtitle {
+      font-size: 9pt;
+      color: #8892b0;
+    }
+
+    .effective-badge {
+      background: #1c1f2e;
+      border: 1px solid #2d3148;
+      border-radius: 6px;
+      padding: 8px 14px;
+      text-align: right;
+    }
+
+    .effective-badge .label {
+      font-size: 7pt;
+      color: #6b7194;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 2px;
+    }
+
+    .effective-badge .date {
+      font-size: 10pt;
+      font-weight: 600;
+      color: #a78bfa;
+    }
+
+    /* ── Sections ── */
+    .section {
+      margin-bottom: 28px;
+    }
+
+    h2 {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #c5c9d8;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #1e2133;
+    }
+
+    p {
+      color: #b8bdd4;
+      margin-bottom: 10px;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    ul, ol {
+      color: #b8bdd4;
+      padding-left: 20px;
+      margin-bottom: 10px;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+
+    strong {
+      color: #dcdfe8;
+      font-weight: 600;
+    }
+
+    /* ── Numbered sections (1. , 2. etc.) ── */
+    .section-numbered {
+      margin-bottom: 22px;
+    }
+
+    .section-numbered .section-title {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #d4d7e8;
+      margin-bottom: 7px;
+    }
+
+    .section-numbered .section-title span {
+      color: #7c74ff;
+      margin-right: 6px;
+    }
+
+    .section-numbered p,
+    .section-numbered li {
+      font-size: 9.5pt;
+    }
+
+    /* ── Callout boxes ── */
+    .callout {
+      background: #161924;
+      border-left: 3px solid #7c74ff;
+      border-radius: 4px;
+      padding: 12px 16px;
+      margin: 12px 0;
+    }
+
+    .callout p {
+      font-size: 9pt;
+      color: #9299b8;
+      margin: 0;
+    }
+
+    .callout strong {
+      color: #a78bfa;
+    }
+
+    /* ── Divider ── */
+    hr {
+      border: none;
+      border-top: 1px solid #1e2133;
+      margin: 28px 0;
+    }
+
+    /* ── Footer ── */
+    .doc-footer {
+      margin-top: 50px;
+      padding-top: 20px;
+      border-top: 1px solid #1e2133;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer-left {
+      font-size: 8pt;
+      color: #4a5168;
+    }
+
+    .footer-right {
+      font-size: 8pt;
+      color: #4a5168;
+    }
+
+    /* ── Print adjustments ── */
+    @media print {
+      body {
+        background: #fff;
+        color: #1a1c28;
+        padding: 0;
+      }
+
+      .callout {
+        background: #f5f4ff;
+        border-left-color: #6c63ff;
+      }
+
+      .callout p {
+        color: #4a4d66;
+      }
+
+      .callout strong {
+        color: #5a52d5;
+      }
+
+      h2 {
+        color: #2d2f45;
+        border-bottom-color: #d0d2e0;
+      }
+
+      .section-numbered .section-title {
+        color: #2d2f45;
+      }
+
+      p, li {
+        color: #3a3d55;
+      }
+
+      strong {
+        color: #1a1c28;
+      }
+
+      .brand-name {
+        color: #1a1c28;
+      }
+
+      .doc-header {
+        border-bottom-color: #c0c2d6;
+      }
+
+      .doc-footer {
+        border-top-color: #c0c2d6;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="doc-header">
+    <div class="brand-row">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <div class="brand-name">Credit Wizard AI</div>
+        <div class="brand-tagline">Automated Credit Repair Platform</div>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-title-block">
+        <h1>Terms of Service</h1>
+        <div class="subtitle">These terms govern your use of the Credit Wizard AI platform and services.</div>
+      </div>
+      <div class="effective-badge">
+        <div class="label">Effective Date</div>
+        <div class="date">May 2026</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ SECTION 1 ═══ -->
+  <div class="section-numbered">
+    <div class="section-title"><span>1.</span> Acceptance of Terms</div>
+    <p>By creating an account or using any part of the Credit Wizard AI platform — including our operator dashboard, client portal, automated dispute tools, mail management features, or any related services (collectively, the "Service") — you agree to be bound by these Terms of Service. If you are using the Service on behalf of a company or other organization, you represent that you have the authority to bind that entity to these terms as well.</p>
+    <p>If you do not agree to these terms, do not use the Service.</p>
+  </div>
+
+  <!-- ═══ SECTION 2 ═══ -->
+  <div class="section-numbered">
+    <div class="section-title"><span>2.</span> Description of Service</div>
+    <p>Credit Wizard AI provides a white-label SaaS platform that enables credit repair companies to onboard clients, generate and send automated dispute letters, track dispute progress, manage mail queues, and provide clients with access to a dedicated portal. The Service includes:</p>
+    <ul>
+      <li>Automated dispute letter generation based on user inputs and credit bureau guidelines.</li>
+      <li>Client intake and onboarding workflows.</li>
+      <li>Mail queue management and tracking.</li>
+      <li>Operator dashboard for managing clients, disputes, and workflows.</li>
+      <li>Client-facing portal for viewing dispute status and communications.</li>
+    </ul>
+    <p>The Service is a software tool designed to support the credit repair process — it does not replace professional legal, financial, or credit advisory services.</p>
+  </div>
+
+  <!-- ═══ SECTION 3 ═══ -->
+  <div class="section-numbered">
+    <div class="section-title"><span>3.</span> User Accounts and Responsibility</div>
+    <p><strong>Account creation.</strong> To access the Service, you must create an account and provide accurate, complete information. You are responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account.</p>
+    <p><strong>Operator accounts.</strong> Credit repair company operators are responsible for the actions of their employees and authorized users who access the platform. You must ensure that only authorized individuals use your account and that they comply with these terms.</p>
+    <p><strong>Client accounts.</strong> When a credit repair company onboard a consumer client, that client may receive access to the client portal. Both the operator and the client user are responsible for maintaining accurate, current information within the portal.</p>
+    <p><strong>Prohibited uses.</strong> You may not use the Service to: (a) violate any applicable law or regulation; (b) submit false or fraudulent information; (c) impersonate someone else; (d) attempt to gain unauthorized access to any other account or system; or (e) interfere with or disrupt the integrity or performance of the Service.</p>
+    <p>You agree to notify Credit Wizard AI promptly if you become aware of any unauthorized use of your account.</p>
+  </div>
+
+  <!-- ═══ SECTION 4 ═══ -->
+  <div class="section-numbered">
+    <div class="section-title"><span>4.</span> Client Representations</div>
+    <p>When a consumer client uses the Credit Wizard AI platform — whether directly or through a credit repair company — that client represents and warrants that:</p>
+    <ul>
+      <li>They have the lawful right to dispute the credit items submitted through the platform.</li>
+      <li>The information they provide is accurate and complete to the best of their knowledge.</li>
+      <li>They are not using the platform to process disputes for accounts they do not have the legal right to challenge.</li>
+      <li>They understand that the platform is a software tool and not a substitute for legal advice.</li>
+    </ul>
+    <p>Credit repair company operators represent that they are properly licensed and authorized to conduct credit repair services in the jurisdictions where they operate, and that they will comply with all applicable federal and state laws governing credit repair, including the Credit Repair Organizations Act (CROA).</p>
+  </div>
+
+  <!-- ═══ SECTION 5 ═══ -->
+  <div class="section-numbered">
+    <div class="section-title"><span>5.</span> Disclaimers</div>
+    <p><strong>Not legal advice.</strong> Credit Wizard AI is a software platform. Nothing on the platform — including automated dispute letters, content, guides, or communications — constitutes legal advice. We strongly encourage all users to consult with a licensed attorney or qualified credit professional before making decisions based on credit disputes or related matters.</p>
+    <p><strong>Results not guaranteed.</strong> Credit repair outcomes depend on many factors, including the accuracy of information submitted, the policies of credit bureaus, the nature of the items being disputed, and actions taken by creditors. Credit Wizard AI does not guarantee that any dispute will result in a favorable outcome, including item removal, score improvement, or any other specific result.</p>
+    <p><strong>As-is service.</strong> The Service is provided "as available" and "as is," without warranties of any kind, express or implied, including but not limited to implied warranties of merchantability, fitness for a particular purpose, and non-infringement. We do not warrant that the Service will be uninterrupted, error-free, or completely secure.</p>
+
+    <div class="callout">
+      <p><strong>No guarantee of credit improvement.</strong> Using Credit Wizard AI does not guarantee that your credit score will improve, that negative items will be removed, or that any particular financial outcome will occur. Individual results depend on factors entirely outside our control, including actions by credit bureaus and furnishers.</p>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 6 ═══ -->
+  <div class="section-numbered">
+    <div class="section-title"><span>6.</span> FCRA Compliance</div>
+    <p>Credit Wizard AI is designed to support users in exercising their rights under the Fair Credit Reporting Act (FCRA). Users are responsible for ensuring that their use of the platform, including any dispute activities, complies with applicable FCRA requirements and any other relevant federal, state, and local laws.</p>
+    <p>Credit Wizard AI does not assume responsibility for how operators or their clients use the platform in connection with FCRA rights. Operators are solely responsible for ensuring their credit repair practices comply with the FCRA, the Fair Credit Billing Act, the Dodd-Frank Act, and any other applicable consumer protection statutes.</p>
+    <p>We reserve the right to suspend or terminate accounts that we reasonably believe are being used in violation of applicable law.</p>
+  </div>
+
+  <!-- ═══ SECTION 7 ═══ -->
+  <div class="section-numbered">
+    <div class="section-title"><span>7.</span> Limitation of Liability</div>
+    <p>To the maximum extent permitted by law, Credit Wizard AI — including its officers, directors, employees, agents, affiliates, and suppliers — shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits, revenue, data, or business opportunities, arising out of or related to your use of (or inability to use) the Service.</p>
+    <p>Our total aggregate liability under these terms shall not exceed the amount you paid us for the Service in the twelve (12) months preceding the event giving rise to the claim, or one hundred US dollars ($100), whichever is greater.</p>
+    <p>This limitation applies regardless of whether the claim is based on contract, tort, statutory law, or any other legal theory, and regardless of whether we have been advised of the possibility of such damages.</p>
+  </div>
+
+  <!-- ═══ SECTION 8 ═══ -->
+  <div class="section-numbered">
+    <div class="section-title"><span>8.</span> Intellectual Property</div>
+    <p>All software, technology, content, branding, designs, and materials made available through the Credit Wizard AI platform — including but not limited to the user interface, automated letter templates, documentation, and any proprietary methods — are the exclusive property of Credit Wizard AI and are protected by intellectual property laws.</p>
+    <p>Operators and their clients are granted a limited, non-exclusive, non-transferable license to use the platform for its intended purpose during the term of their subscription or account. This license does not include the right to copy, modify, reverse-engineer, or sublicense any part of the Service.</p>
+    <p>You may not use our branding, trademarks, or的名义 without prior written consent.</p>
+    <div class="callout">
+      <p><strong>User content.</strong> You retain ownership of any content, data, or materials you submit to the platform. By using the Service, you grant Credit Wizard AI a limited license to use, store, and process that content as necessary to deliver the Service to you.</p>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 9 ═══ -->
+  <div class="section-numbered">
+    <div class="section-title"><span>9.</span> Termination</div>
+    <p><strong>By you.</strong> You may cancel your account at any time by contacting us or using the account management options within the platform. Cancellation will take effect at the end of your current billing period.</p>
+    <p><strong>By Credit Wizard AI.</strong> We may suspend or terminate your access to the Service — in whole or in part — if we reasonably believe you have violated these terms, applicable law, or that continued access poses a risk to the platform, its users, or third parties. We will endeavor to provide notice where practicable, but immediate suspension may occur without notice in extraordinary circumstances.</p>
+    <p><strong>Effect of termination.</strong> Upon termination, your right to access and use the Service ceases immediately. We are not obligated to provide access to any data or content after termination, though we may, at our discretion, provide a export window for certain data within a reasonable period following termination.</p>
+    <p>Sections that by their nature should survive termination — including Disclaimers, Limitation of Liability, Intellectual Property, and Governing Law — will survive.</p>
+  </div>
+
+  <!-- ═══ SECTION 10 ═══ -->
+  <div class="section-numbered">
+    <div class="section-title"><span>10.</span> Governing Law</div>
+    <p>These terms are governed by and construed in accordance with the laws of the State of Delaware, without regard to its conflict of laws principles. Any dispute arising out of or relating to these terms or your use of the Service shall be resolved in the state or federal courts located in Wilmington, Delaware, and you hereby consent to the personal jurisdiction of those courts.</p>
+    <p>If a court of competent jurisdiction finds any provision of these terms to be unenforceable, that provision shall be modified to the minimum extent necessary to make it enforceable, and the remaining provisions shall remain in full force and effect.</p>
+  </div>
+
+  <!-- ═══ SECTION 11 ═══ -->
+  <div class="section-numbered">
+    <div class="section-title"><span>11.</span> Changes to These Terms</div>
+    <p>Credit Wizard AI may update these Terms of Service from time to time to reflect changes in our Service, legal requirements, or business practices. When we make material changes, we will notify operators via the email address associated with their account and/or by posting a prominent notice within the platform at least thirty (30) days before the changes take effect.</p>
+    <p>Continued use of the Service after a change takes effect constitutes your acceptance of the revised terms. If you do not agree to the changes, you must stop using the Service before the effective date and cancel your account.</p>
+    <p>We encourage you to review these terms periodically. The "Effective Date" at the top of this document indicates when these terms were last updated.</p>
+  </div>
+
+  <!-- ═══ SECTION 12 ═══ -->
+  <div class="section-numbered">
+    <div class="section-title"><span>12.</span> Contact Information</div>
+    <p>If you have any questions about these Terms of Service, or if you need to contact us for any reason related to your account or the Service, please reach out:</p>
+    <ul>
+      <li><strong>Email:</strong> legal@creditwizardai.com</li>
+      <li><strong>Support portal:</strong> support.creditwizardai.com</li>
+      <li><strong>Mailing address:</strong> Credit Wizard AI, Attn: Legal Department, 20252 NE 15th Ct, Miami, FL 33179, United States</li>
+    </ul>
+    <p>We aim to respond to all legitimate inquiries within three (3) business days. For account-specific issues, please include your account email and any relevant ticket or case number to help us locate your records quickly.</p>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="doc-footer">
+    <div class="footer-left">Credit Wizard AI &copy; 2026. All rights reserved.</div>
+    <div class="footer-right">Terms of Service &middot; Effective May 2026</div>
+  </footer>
+
+</body>
+</html>

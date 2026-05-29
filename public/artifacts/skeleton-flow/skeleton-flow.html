@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credit Wizard — End-to-End Flow</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #070d1a;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  .page-title {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #38bdf8;
+    font-weight: 700;
+  }
+
+  .page-subtitle {
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 26px;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: -0.03em;
+  }
+
+  .page-updated {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 11px;
+    color: #475569;
+    letter-spacing: 0.05em;
+  }
+
+  .page-updated span { color: #38bdf8; }
+
+  /* ── LEGEND ───────────────────────────────── */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    margin-bottom: 44px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-blue   { background: #38bdf8; box-shadow: 0 0 8px #38bdf888; }
+  .dot-green  { background: #34d399; box-shadow: 0 0 8px #34d39988; }
+  .dot-amber  { background: #fbbf24; box-shadow: 0 0 8px #fbbf2488; }
+  .dot-rose   { background: #fb7185; box-shadow: 0 0 8px #fb718588; }
+  .dot-sky    { background: #0ea5e9; box-shadow: 0 0 8px #0ea5e988; }
+
+  /* ── CONTAINER ────────────────────────────── */
+  .flow-container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ── FLOW GROUP ───────────────────────────── */
+  .flow-group { margin-bottom: 64px; }
+
+  .flow-group-header {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1e293b;
+  }
+
+  /* ── STEP ROW ─────────────────────────────── */
+  .flow-row {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .flow-row .step {
+    flex: 1;
+    min-width: 155px;
+  }
+
+  .flow-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e3a5f;
+    font-size: 16px;
+    min-width: 28px;
+    flex-shrink: 0;
+  }
+
+  /* ── STEP BOX ─────────────────────────────── */
+  .step {
+    border-radius: 16px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid transparent;
+  }
+
+  .step-actor {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 7px;
+    opacity: 0.7;
+  }
+
+  .step-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f1f5f9;
+    line-height: 1.4;
+    margin-bottom: 5px;
+  }
+
+  .step-desc {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.5;
+  }
+
+  /* Colors */
+  .step-blue  { background: rgba(56,189,248,0.06);  border-color: rgba(56,189,248,0.15); }
+  .step-blue  .step-actor { color: #38bdf8; }
+
+  .step-green { background: rgba(52,211,153,0.06);  border-color: rgba(52,211,153,0.15); }
+  .step-green .step-actor { color: #34d399; }
+
+  .step-amber { background: rgba(251,191,36,0.06);  border-color: rgba(251,191,36,0.15); }
+  .step-amber .step-actor { color: #fbbf24; }
+
+  .step-rose  { background: rgba(251,113,133,0.06); border-color: rgba(251,113,133,0.15); }
+  .step-rose  .step-actor { color: #fb7185; }
+
+  .step-sky   { background: rgba(14,165,233,0.06); border-color: rgba(14,165,233,0.15); }
+  .step-sky   .step-actor { color: #0ea5e9; }
+
+  /* Step number */
+  .step-num {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700;
+    color: #475569;
+  }
+
+  /* Badges */
+  .bot-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(251,113,133,0.1);
+    border: 1px solid rgba(251,113,133,0.25);
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: #fb7185;
+    margin-top: 8px;
+  }
+  .bot-badge::before { content: '🤖'; font-size: 10px; }
+
+  .auto-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(52,211,153,0.1);
+    border: 1px solid rgba(52,211,153,0.25);
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: #34d399;
+    margin-top: 8px;
+  }
+  .auto-badge::before { content: '⚡'; font-size: 10px; }
+
+  .staff-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(56,189,248,0.1);
+    border: 1px solid rgba(56,189,248,0.25);
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: #38bdf8;
+    margin-top: 8px;
+  }
+  .staff-badge::before { content: '👤'; font-size: 10px; }
+
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(14,165,233,0.1);
+    border: 1px solid rgba(14,165,233,0.25);
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: #0ea5e9;
+    margin-top: 8px;
+  }
+  .ai-badge::before { content: '🧠'; font-size: 10px; }
+
+  /* Arrow row */
+  .arrow-row {
+    display: flex;
+    justify-content: center;
+    padding: 3px 0;
+    color: #1e3a5f;
+    font-size: 16px;
+    gap: 0;
+    align-items: center;
+  }
+  .arrow-row::before, .arrow-row::after {
+    content: ''; display: block;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #1e3a5f 30%, #1e3a5f 70%, transparent);
+    flex: 1; max-width: 60px;
+  }
+
+  /* Section divider */
+  .section-divider {
+    display: flex; align-items: center;
+    gap: 12px; margin: 32px 0;
+  }
+  .section-divider::before, .section-divider::after {
+    content: ''; flex: 1; height: 1px; background: #1e293b;
+  }
+  .section-divider-label {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: #334155;
+  }
+
+  /* Callout strip */
+  .callout-strip {
+    background: rgba(56,189,248,0.04);
+    border: 1px solid rgba(56,189,248,0.12);
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 12px;
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.6;
+  }
+  .callout-strip strong { color: #38bdf8; }
+</style>
+</head>
+<body>
+
+<div class="flow-container">
+
+  <div class="page-title">Credit Wizard AI</div>
+  <div class="page-subtitle">End-to-end skeleton flow</div>
+  <div class="page-updated">Last updated: <span>May 2026</span></div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot dot-green"></div> Client action</div>
+    <div class="legend-item"><div class="legend-dot dot-blue"></div> Company / staff action</div>
+    <div class="legend-item"><div class="legend-dot dot-amber"></div> Waiting / pending</div>
+    <div class="legend-item"><div class="legend-dot dot-rose"></div> Bot / automation</div>
+    <div class="legend-item"><div class="legend-dot dot-sky"></div> AI layer</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       FLOW 1 — PUBLIC ACQUISITION
+  ══════════════════════════════════════════════════════ -->
+  <div class="flow-group">
+    <div class="flow-group-header">01 · Public acquisition — new company gets started</div>
+
+    <div class="flow-row">
+      <div class="step step-green">
+        <div class="step-num">1</div>
+        <div class="step-actor">Visitor</div>
+        <div class="step-title">Signs up for free trial</div>
+        <div class="step-desc">Opens sign-up page, enters company name, owner name, email, and consent to terms.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-sky">
+        <div class="step-num">2</div>
+        <div class="step-actor">AI</div>
+        <div class="step-title">Stripe checkout via Stripe</div>
+        <div class="step-desc">Visitor completes or skips payment. Trial starts automatically. Stripe webhook fires on payment.</div>
+        <div class="ai-badge">Stripe</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-rose">
+        <div class="step-num">3</div>
+        <div class="step-actor">Bot</div>
+        <div class="step-title">Billing webhook fires — account unlocks</div>
+        <div class="step-desc">Stripe confirms payment. Account unlocked. Audit log written. Company can now access dashboard.</div>
+        <div class="bot-badge">Automated</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-blue">
+        <div class="step-num">4</div>
+        <div class="step-actor">Owner</div>
+        <div class="step-title">Lands in company dashboard</div>
+        <div class="step-desc">Owner sees workspace: Clients, Intake, Mail Queue, Billing, Team, Bot Quality, Profile.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"><div class="section-divider-label">Next: company sets up white label profile</div></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       FLOW 2 — WHITE LABEL SETUP
+  ══════════════════════════════════════════════════════ -->
+  <div class="flow-group">
+    <div class="flow-group-header">02 · White label setup — company customizes their brand</div>
+
+    <div class="flow-row">
+      <div class="step step-blue">
+        <div class="step-num">1</div>
+        <div class="step-actor">Company</div>
+        <div class="step-title">Opens Profile settings</div>
+        <div class="step-desc">Owner goes to Profile → uploads company logo (JPEG/PNG/SVG/WebP), sets company name.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-blue">
+        <div class="step-num">2</div>
+        <div class="step-actor">Company</div>
+        <div class="step-title">Sets mailing default</div>
+        <div class="step-desc">Chooses default mailing method: Regular or Certified. Pre-fills every mail send. Certified costs 10 tokens, Regular costs 4.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-sky">
+        <div class="step-num">3</div>
+        <div class="step-actor">System</div>
+        <div class="step-title">Logo applied to client portal</div>
+        <div class="step-desc">Company logo appears on every client-facing page. White-label — no Credit Wizard branding shown to end clients.</div>
+        <div class="ai-badge">Automated</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"><div class="section-divider-label">Next: company adds their first client</div></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       FLOW 3 — CLIENT ONBOARDING
+  ══════════════════════════════════════════════════════ -->
+  <div class="flow-group">
+    <div class="flow-group-header">03 · Client onboarding — company brings in their first client</div>
+
+    <div class="flow-row">
+      <div class="step step-blue">
+        <div class="step-num">1</div>
+        <div class="step-actor">Company</div>
+        <div class="step-title">Adds client from dashboard</div>
+        <div class="step-desc">Enters first name, last name, email, phone. Selects mailing preference (Regular or Certified).</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-sky">
+        <div class="step-num">2</div>
+        <div class="step-actor">System</div>
+        <div class="step-title">Onboarding link generated</div>
+        <div class="step-desc">Unique secure link created. Company copies and sends to client via email, SMS, or any app. Link expires in 30 days.</div>
+        <div class="ai-badge">Automated</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-amber">
+        <div class="step-num">3</div>
+        <div class="step-actor">Pending</div>
+        <div class="step-title">Awaiting client to complete form</div>
+        <div class="step-desc">Client has 30 days. Status stays "Pending." Bot sends reminders at 12-hour intervals if form is incomplete.</div>
+      </div>
+    </div>
+
+    <div class="arrow-row">↓</div>
+
+    <div class="flow-row">
+      <div class="step step-green">
+        <div class="step-num">4</div>
+        <div class="step-actor">Client</div>
+        <div class="step-title">Opens onboarding link</div>
+        <div class="step-desc">Branded form opens. No login needed. Company logo shown top-left. Legal consent checkbox required to proceed.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-green">
+        <div class="step-num">5</div>
+        <div class="step-actor">Client</div>
+        <div class="step-title">Watches welcome video</div>
+        <div class="step-desc">Portal welcome video auto-plays. Explains what to expect, how disputes work, what comes next.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-green">
+        <div class="step-num">6</div>
+        <div class="step-actor">Client</div>
+        <div class="step-title">Completes onboarding wizard</div>
+        <div class="step-desc">Personal info → identity theft disclosure (conditional) → credit disputes → preferences → consent → submit.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-rose">
+        <div class="step-num">7</div>
+        <div class="step-actor">Bot</div>
+        <div class="step-title">Portal access opens — status advances</div>
+        <div class="step-desc">Form data saved. Client lands in their portal. Status moves to "Docs Pending." Client can now chat with AI support.</div>
+        <div class="bot-badge">Automated</div>
+      </div>
+    </div>
+
+    <div class="arrow-row">↓</div>
+
+    <div class="flow-row">
+      <div class="step step-rose">
+        <div class="step-num">!</div>
+        <div class="step-actor">Bot</div>
+        <div class="step-title">Smart follow-up if client goes quiet</div>
+        <div class="step-desc">12-hour reminder cron fires. Client can reply with a specific time ("tomorrow at 2pm") — bot schedules a follow-up for that exact time and stops generic reminders.</div>
+        <div class="bot-badge">Automated</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"><div class="section-divider-label">Next: disputes generated automatically</div></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       FLOW 4 — DISPUTE ENGINE
+  ══════════════════════════════════════════════════════ -->
+  <div class="flow-group">
+    <div class="flow-group-header">04 · Dispute engine — AI parses credit report and prepares disputes automatically</div>
+
+    <div class="callout-strip">
+      <strong>Fully automated.</strong> No staff review step. Bot parses the credit report → identifies negative items → generates dispute letters → queues for mailing. Staff only handles the physical mail drop.
+    </div>
+
+    <div class="flow-row">
+      <div class="step step-green">
+        <div class="step-num">1</div>
+        <div class="step-actor">Client</div>
+        <div class="step-title">Uploads credit report PDF</div>
+        <div class="step-desc">Client uploads credit report from Credit Hero member portal. PDF goes to document storage.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-sky">
+        <div class="step-num">2</div>
+        <div class="step-actor">AI</div>
+        <div class="step-title">Credit Hero PDF parsed</div>
+        <div class="step-desc">System extracts all tradelines, bureau assignments, account statuses, and dispute history from the uploaded PDF.</div>
+        <div class="ai-badge">AI parsed</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-rose">
+        <div class="step-num">3</div>
+        <div class="step-actor">Bot</div>
+        <div class="step-title">Negative items identified</div>
+        <div class="step-desc">Bot maps tradelines against client's onboarding disclosures. Flags inaccurate, outdated, and unverifiable items.</div>
+        <div class="bot-badge">Automated</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-rose">
+        <div class="step-num">4</div>
+        <div class="step-actor">Bot</div>
+        <div class="step-title">Dispute letters generated</div>
+        <div class="step-desc">Formal dispute letters drafted for each bureau. All letters queued in Mail Queue under the client's record.</div>
+        <div class="bot-badge">Automated</div>
+      </div>
+    </div>
+
+    <div class="arrow-row">↓</div>
+
+    <div class="flow-row">
+      <div class="step step-amber">
+        <div class="step-num">5</div>
+        <div class="step-actor">Queue</div>
+        <div class="step-title">Letters sit in Mail Queue</div>
+        <div class="step-desc">Queued tab shows all pending letters. Staff reviews which clients/letters to mail. Tracking number required for Certified.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-blue">
+        <div class="step-num">6</div>
+        <div class="step-actor">Staff</div>
+        <div class="step-title">Marks as mailed</div>
+        <div class="step-desc">Staff physically mails letters. Enters tracking number, clicks "Mark as mailed." Token deducted from company account.</div>
+        <div class="staff-badge">Staff action</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-rose">
+        <div class="step-num">7</div>
+        <div class="step-actor">Bot</div>
+        <div class="step-title">Client notified of shipment</div>
+        <div class="step-desc">Bot messages client in portal: "Your dispute letters have been mailed. Here's your tracking info." Certified mail = company charged.</div>
+        <div class="bot-badge">Automated</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-rose">
+        <div class="step-num">8</div>
+        <div class="step-actor">Bot</div>
+        <div class="step-title">Tracks bureau response window</div>
+        <div class="step-desc">Bot monitors for bureau response. Escalates to company if letters stuck in queue beyond SLA thresholds (24h / 48h / 72h / 7 days).</div>
+        <div class="bot-badge">Automated</div>
+      </div>
+    </div>
+
+    <div class="arrow-row">↓</div>
+
+    <div class="flow-row">
+      <div class="step step-green">
+        <div class="step-num">9</div>
+        <div class="step-actor">Client</div>
+        <div class="step-title">Uploads updated credit report</div>
+        <div class="step-desc">Bot messages client: "Time to pull a new credit report — upload it here." Or bot pulls directly if Credit Hero API available.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-sky">
+        <div class="step-num">10</div>
+        <div class="step-actor">AI</div>
+        <div class="step-title">New report parsed — delta analyzed</div>
+        <div class="step-desc">Bot compares new report vs. previous. Identifies deletions, improvements, new negatives. Dispute cycle repeats if needed.</div>
+        <div class="ai-badge">AI parsed</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-rose">
+        <div class="step-num">11</div>
+        <div class="step-actor">Bot</div>
+        <div class="step-title">Result sent to client — funding check triggered</div>
+        <div class="step-desc">Bot notifies client of bureau response. If score improved, funding opportunity alert fires automatically.</div>
+        <div class="bot-badge">Automated</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"><div class="section-divider-label">Next: ongoing client support</div></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       FLOW 5 — CLIENT SUPPORT
+  ══════════════════════════════════════════════════════ -->
+  <div class="flow-group">
+    <div class="flow-group-header">05 · Client support — AI handles all questions automatically, staff only steps in when needed</div>
+
+    <div class="flow-row">
+      <div class="step step-green">
+        <div class="step-num">1</div>
+        <div class="step-actor">Client</div>
+        <div class="step-title">Clicks "Message support" in portal</div>
+        <div class="step-desc">Client clicks the chat button in their portal. Chat widget opens directly — no page navigation.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-sky">
+        <div class="step-num">2</div>
+        <div class="step-actor">AI</div>
+        <div class="step-title">AI reads full client context</div>
+        <div class="step-desc">Before answering, AI has: client name, lifecycle stage, onboarding status, dispute counts, deletion counts, provider name, funding interest.</div>
+        <div class="ai-badge">Full context</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-sky">
+        <div class="step-num">3</div>
+        <div class="step-actor">AI</div>
+        <div class="step-title">Answers credit repair questions</div>
+        <div class="step-desc">Dispute status, process questions, timeline questions, scoring questions — all answered from knowledge base + client data.</div>
+        <div class="ai-badge">Knowledge base</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-rose">
+        <div class="step-num">4</div>
+        <div class="step-actor">Bot</div>
+        <div class="step-title">Escalates to staff if out of scope</div>
+        <div class="step-desc">Off-topic, billing questions, complaints → flagged as STAFF. Staff receives notification. Client sees "follow-up coming."</div>
+        <div class="bot-badge">Escalation</div>
+      </div>
+    </div>
+
+    <div class="arrow-row">↓</div>
+
+    <div class="flow-row">
+      <div class="step step-sky">
+        <div class="step-num">5</div>
+        <div class="step-actor">AI</div>
+        <div class="step-title">3-layer fallback on unknown questions</div>
+        <div class="step-desc">KB search → DuckDuckGo web search → if both fail, escalate to staff with "sending to team" message.</div>
+        <div class="ai-badge">3-layer fallback</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-sky">
+        <div class="step-num">6</div>
+        <div class="step-actor">AI</div>
+        <div class="step-title">Client rates each exchange</div>
+        <div class="step-desc">Star rating (1–5) appears on first AI reply. Rating stored per conversation exchange. Tracked in Bot Quality dashboard.</div>
+        <div class="ai-badge">Rated</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-blue">
+        <div class="step-num">7</div>
+        <div class="step-actor">Staff</div>
+        <div class="step-title">Handles escalations</div>
+        <div class="step-desc">Staff sees escalated conversations in dashboard. Responds directly. Rating from AI layer preserved.</div>
+        <div class="staff-badge">Staff action</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"><div class="section-divider-label">Next: team management</div></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       FLOW 6 — TEAM MANAGEMENT
+  ══════════════════════════════════════════════════════ -->
+  <div class="flow-group">
+    <div class="flow-group-header">06 · Team — owner adds staff and assigns role-based permissions</div>
+
+    <div class="flow-row">
+      <div class="step step-blue">
+        <div class="step-num">1</div>
+        <div class="step-actor">Owner</div>
+        <div class="step-title">Opens Team tab and invites staff</div>
+        <div class="step-desc">Enters staff name and email. Assigns one of 4 roles: Admin, Support, Analyst, or Mail Team.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-amber">
+        <div class="step-num">2</div>
+        <div class="step-actor">System</div>
+        <div class="step-title">Invite email sent</div>
+        <div class="step-desc">Email with invite link sent to staff. If email not configured, a manual link is shown to copy and share.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-green">
+        <div class="step-num">3</div>
+        <div class="step-actor">Staff</div>
+        <div class="step-title">Accepts invite, sets password</div>
+        <div class="step-desc">Staff clicks link, sets password, lands in dashboard. Role determines which tabs and actions they can see/use.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-sky">
+        <div class="step-num">4</div>
+        <div class="step-actor">System</div>
+        <div class="step-title">Role permissions enforced everywhere</div>
+        <div class="step-desc">Tabs, actions, and data views scoped to role. Owner can see and do everything. Seats counted against plan limit.</div>
+        <div class="ai-badge">Role-based</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"><div class="section-divider-label">Bot Quality & Observability</div></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       FLOW 7 — BOT QUALITY
+  ══════════════════════════════════════════════════════ -->
+  <div class="flow-group">
+    <div class="flow-group-header">07 · Bot Quality — every AI response is measured and visible to the company</div>
+
+    <div class="flow-row">
+      <div class="step step-sky">
+        <div class="step-num">1</div>
+        <div class="step-actor">AI</div>
+        <div class="step-title">Every message logged with metadata</div>
+        <div class="step-desc">Role (CLIENT/BOT/STAFF), content, timestamp, client ID, tenant ID, response time, knowledge base hit or web search used.</div>
+        <div class="ai-badge">Logged</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-sky">
+        <div class="step-num">2</div>
+        <div class="step-actor">AI</div>
+        <div class="step-title">Rating collected per exchange</div>
+        <div class="step-desc">Client rates first AI reply after each message they send. 1–5 stars. Stored in ChatMessage record.</div>
+        <div class="ai-badge">Rated</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-blue">
+        <div class="step-num">3</div>
+        <div class="step-actor">Company</div>
+        <div class="step-title">Bot Quality dashboard — 7/14/30 day views</div>
+        <div class="step-desc">Sees: message volume, escalation rate, avg rating, rating distribution, top escalation clients. Period selector switches views.</div>
+      </div>
+      <div class="flow-connector">→</div>
+      <div class="step step-sky">
+        <div class="step-num">4</div>
+        <div class="step-actor">AI</div>
+        <div class="step-title">Knowledge base updated from real gaps</div>
+        <div class="step-desc">Escalation patterns reveal KB gaps. Company uses KB Management UI to add new Q&As. Bot improves continuously.</div>
+        <div class="ai-badge">Continuous learning</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/chat/process-queue",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/onboarding-reminder",
+      "schedule": "0 */12 * * *"
+    },
+    {
+      "path": "/api/cron/mail-follow-up",
+      "schedule": "0 */12 * * *"
+    }
+  ]
+}

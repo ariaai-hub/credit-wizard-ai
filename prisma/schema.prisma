@@ -1,0 +1,640 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  STARTER
+  PRO
+  ELITE
+}
+
+enum TenantStatus {
+  ACTIVE
+  GRACE
+  SUSPENDED
+  CANCELLED
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  SUPPORT
+  MAIL_TEAM
+  ANALYST
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  DISABLED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  GRACE
+  PAUSED
+  CANCELLED
+}
+
+enum TokenTransactionType {
+  ALLOCATION
+  PURCHASE
+  RESERVE
+  DEBIT
+  RELEASE
+  REFUND
+  ADJUSTMENT
+}
+
+enum TokenActionType {
+  LETTER_GENERATION
+  FUNDING_RECOMMENDATION
+}
+
+enum AccessMode {
+  READ_WRITE
+  READ_ONLY
+  LOCKED
+}
+
+enum MailPreference {
+  REGULAR
+  CERTIFIED
+}
+
+enum ClientLifecycleStage {
+  INTAKE_RECEIVED
+  DOCS_PENDING
+  READY_FOR_STRATEGY
+  STRATEGY_READY
+  LETTER_GENERATED
+  MAIL_QUEUED
+  MAIL_SENT
+}
+
+enum CreditProviderClientStatus {
+  NOT_STARTED
+  SIGNUP_LINK_READY
+  SIGNUP_SENT
+  SIGNUP_COMPLETED
+  SYNCED
+  FAILED
+}
+
+enum DisputeCaseStatus {
+  DRAFT
+  IN_REVIEW
+  ACTIVE
+  MONITORING
+  ESCALATED
+  RESOLVED
+  CLOSED
+}
+
+enum DisputeTradelineStatus {
+  NEW
+  ROUTED
+  DISPUTED
+  MONITORING
+  ESCALATED
+  RESOLVED
+}
+
+enum DisputeRoundKind {
+  INTAKE
+  BUREAU
+  FURNISHER
+  CONTRADICTION
+  COMPLAINT
+  PRE_CLAIM
+  ARBITRATION
+  LITIGATION
+  MONITORING
+}
+
+enum CreditReportImportStatus {
+  UPLOADED
+  REVIEW_PENDING
+  NORMALIZED
+  IMPORTED
+  NEEDS_REVISION
+}
+
+enum CreditReportSourceType {
+  CLIENT_UPLOAD
+  STAFF_UPLOAD
+  MANUAL_ENTRY
+  CSV_IMPORT
+}
+
+model Tenant {
+  id                  String                @id @default(cuid())
+  name                String
+  slug                String                @unique
+  status              TenantStatus          @default(ACTIVE)
+  accessMode          AccessMode            @default(READ_WRITE)
+  billingEmail        String
+  ownerName           String?
+  ownerEmail          String?
+  ownerPhone          String?
+  companyPhone        String?
+  crcConfigRef        String?
+  creditProvider      String                @default("CREDIT_HERO")
+  creditProviderRef   String?
+  mailQueueDestination String?
+  stripeCustomerId    String?               @unique
+  stripeSubscriptionId String?
+  referralCode        String?               @unique
+  referredBy          String?
+  plan                Plan?                 @default(STARTER)
+  graceEndsAt         DateTime?
+  suspendedAt         DateTime?
+  logoUrl             String?
+  primaryColor        String                @default("#2563eb")
+  accentColor         String                @default("#0ea5e9")
+  defaultMailType     MailPreference       @default(REGULAR)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  users               User[]
+  invitations         UserInvitation[]
+  clients             Client[]
+  intakeSubmissions   IntakeSubmission[]
+  subscriptions       BillingSubscription[]
+  tokenAccount        TokenAccount?
+  tokenTransactions   TokenTransaction[]
+  auditLogs           AuditLog[]
+  chatMessages        ChatMessage[]
+  knowledgeBaseEntries KnowledgeBaseEntry[]
+  disputeCases        DisputeCaseRecord[]
+  disputeEngineRuns   DisputeEngineRun[]
+  creditReportImports CreditReportImport[]
+  mailTokenAccount   MailTokenAccount?
+
+  @@index([status])
+  @@index([accessMode])
+}
+
+model MailTokenAccount {
+  id               String             @id @default(cuid())
+  tenantId         String             @unique
+  tenant           Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  includedBalance  Int                @default(0)
+  purchasedBalance Int                @default(0)
+  usedBalance      Int                @default(0)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model Client {
+  id                     String               @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  externalIntakeId       String?
+  crcClientId            String?
+  creditProviderExternalId String?
+  creditProviderSignupUrl String?
+  creditProviderStatus   CreditProviderClientStatus @default(NOT_STARTED)
+  creditProviderLastSyncedAt DateTime?
+  creditProviderLastError String?
+  creditProviderLastResponseJson Json?
+  firstName              String
+  lastName               String
+  email                  String?
+  phone                  String?
+  reportedIdentityTheft  Boolean              @default(false)
+  identityTheftNarrative String?
+  dateOfBirth          String?
+  ssnLast4             String?
+  disputedWithCreditBureaus Boolean           @default(false)
+  authorizedFtcIdentityTheftReport Boolean    @default(false)
+  authorizedCfpbComplaint Boolean             @default(false)
+  authorizedBbbComplaint Boolean              @default(false)
+  mailPreference         MailPreference       @default(REGULAR)
+  fundingInterestPersonal Boolean             @default(false)
+  fundingInterestBusiness Boolean             @default(false)
+  creditReportUrl       String?
+  address                String?
+  city                   String?
+  clientState            String?
+  zip                    String?
+  lifecycleStage         ClientLifecycleStage @default(INTAKE_RECEIVED)
+  onboardingCompletedAt  DateTime?
+  onboardingToken        String?              @unique
+  trackingNumber         String?
+  mailSentAt             DateTime?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  intakeSubmissions      IntakeSubmission[]
+  chatMessages           ChatMessage[]
+  disputeCases           DisputeCaseRecord[]
+  creditReportImports    CreditReportImport[]
+
+  @@index([tenantId, lifecycleStage])
+  @@unique([tenantId, externalIntakeId])
+}
+
+model IntakeSubmission {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  clientId          String?
+  client            Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  source            String   @default("JOTFORM")
+  externalFormId    String?
+  externalSubmissionId String?
+  rawPayloadJson    Json
+  processedAt       DateTime?
+  createdAt         DateTime @default(now())
+
+  @@index([tenantId, source])
+  @@index([externalSubmissionId])
+}
+
+model User {
+  id                       String           @id @default(cuid())
+  tenantId                 String
+  tenant                   Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email                    String
+  name                     String
+  phone                    String?
+  passwordHash             String?
+  role                     UserRole
+  status                   UserStatus       @default(INVITED)
+  lastLoginAt              DateTime?
+  referralCode             String?
+  referredBy                String? // tenantId of referrer
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
+  auditLogs                AuditLog[]
+  createdTokenTransactions TokenTransaction[]
+  invitationsSent          UserInvitation[] @relation("InvitedByUser")
+  invitationsAccepted      UserInvitation[] @relation("AcceptedByUser")
+
+  @@unique([tenantId, email])
+  @@index([tenantId, role])
+}
+
+model UserInvitation {
+  id               String           @id @default(cuid())
+  tenantId         String
+  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email            String
+  name             String?
+  role             UserRole
+  status           InvitationStatus @default(PENDING)
+  token            String           @unique
+  invitedByUserId  String?
+  invitedByUser    User?            @relation("InvitedByUser", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  acceptedByUserId String?
+  acceptedByUser   User?            @relation("AcceptedByUser", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+  expiresAt        DateTime
+  acceptedAt       DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([tenantId, status])
+  @@index([tenantId, email])
+}
+
+model BillingSubscription {
+  id                     String             @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider               String             @default("STRIPE")
+  providerSubscriptionId String?            @unique
+  planKey                String
+  status                 SubscriptionStatus @default(TRIALING)
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  graceEndsAt            DateTime?
+  includedTokenAllowance Int                @default(0)
+  staffSeatLimit         Int                @default(1)
+  metadataJson           Json?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  @@index([tenantId, status])
+  @@index([planKey])
+}
+
+model TokenAccount {
+  id               String             @id @default(cuid())
+  tenantId         String             @unique
+  tenant           Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  includedBalance  Int                @default(0)
+  purchasedBalance Int                @default(0)
+  reservedBalance  Int                @default(0)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  transactions     TokenTransaction[]
+}
+
+model TokenTransaction {
+  id               String                @id @default(cuid())
+  tenantId         String
+  tenant           Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tokenAccountId   String?
+  tokenAccount     TokenAccount?         @relation(fields: [tokenAccountId], references: [id], onDelete: SetNull)
+  transactionType  TokenTransactionType
+  actionType       TokenActionType?
+  quantity         Int
+  referenceType    String?
+  referenceId      String?
+  notes            String?
+  createdAt        DateTime              @default(now())
+  createdByUserId  String?
+  createdByUser    User?                 @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, transactionType])
+  @@index([tenantId, actionType])
+  @@index([referenceType, referenceId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+model AuditLog {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actorType          String
+  actorUserId        String?
+  actorUser          User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  eventType          String
+  referenceType      String?
+  referenceId        String?
+  inputSnapshotJson  Json?
+  outputSnapshotJson Json?
+  createdAt          DateTime @default(now())
+
+  @@index([tenantId, eventType])
+  @@index([referenceType, referenceId])
+  @@index([createdAt])
+}
+
+enum ChatMessageRole {
+  CLIENT
+  BOT
+  STAFF
+}
+
+enum ChatMessageStatus {
+  PENDING      // waiting for AI processing
+  SENT         // AI response delivered
+  ESCALATED    // forwarded to staff
+  FAILED       // AI error
+}
+
+model ChatMessage {
+  id              String            @id @default(cuid())
+  tenantId        String
+  tenant          Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  clientId        String
+  client          Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  role            ChatMessageRole
+  content         String
+  status          ChatMessageStatus @default(PENDING)
+  aiContextJson   Json?             // stored client context used for AI response
+  errorMessage    String?
+  escalatedToUserId String?
+  createdAt       DateTime          @default(now())
+  sentAt          DateTime?         // when AI response was delivered
+  // AI quality tracking
+  aiScore         Int?
+  wasEscalated    Boolean           @default(false)
+  responseTimeMs  Int?
+  feedbackRating  Int?               // 1-5 client rating
+  clientFeedback  String?
+
+  @@index([tenantId, clientId, status, createdAt])
+  @@index([tenantId, status, createdAt])
+}
+
+model KnowledgeBaseEntry {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  question    String   // keywords / question pattern
+  answer      String   // the answer / response
+  category    String   @default("general") // general | policy | dispute | billing
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, isActive])
+}
+
+model DisputeCaseRecord {
+  id                    String            @id @default(cuid())
+  tenantId              String
+  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  clientId              String
+  client                Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  status                DisputeCaseStatus @default(DRAFT)
+  primaryGoal           String            @default("delete_or_correct")
+  currentStage          String?
+  currentReadinessLevel Int?
+  latestEngineSummaryJson Json?
+  latestPacketOrderJson Json?
+  latestEvaluatedAt     DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  tradelines            DisputeTradelineRecord[]
+  rounds                DisputeRoundRecord[]
+  engineRuns            DisputeEngineRun[]
+  creditReportImports   CreditReportImport[]
+
+  @@index([tenantId, status])
+  @@index([clientId])
+  @@unique([tenantId, clientId])
+}
+
+model DisputeTradelineRecord {
+  id                      String                @id @default(cuid())
+  disputeCaseId           String
+  disputeCase             DisputeCaseRecord     @relation(fields: [disputeCaseId], references: [id], onDelete: Cascade)
+  status                  DisputeTradelineStatus @default(NEW)
+  bureau                  String
+  targetType              String
+  accountNumberMasked     String
+  accountType             String
+  theoryPrimary           String
+  remedyPrimary           String
+  furnisherName           String?
+  collectorName           String?
+  originalCreditor        String?
+  responseClass           String?
+  specialLane             String               @default("standard")
+  precisePriorCraDispute  Boolean              @default(false)
+  directFurnisherSufficiencyPassed Boolean     @default(false)
+  knownAccurate           Boolean              @default(false)
+  balance                 Float?
+  pastDue                 Float?
+  monthlyPayment          Float?
+  dateOfFirstDelinquency  String?
+  lastPaymentDate         String?
+  remarksComments         String?
+  scoresJson              Json
+  priorEventsJson         Json?
+  responseDefectsJson     Json?
+  evidenceItemsJson       Json?
+  contradictionMetricsJson Json?
+  identityTheftPackageJson Json?
+  deltaTypesJson          Json?
+  harmEventsJson          Json?
+  readinessSignalsJson    Json?
+  latestDecisionStage     String?
+  latestEscalationOption  String?
+  latestReadinessLevel    Int?
+  latestSuppressionFlagsJson Json?
+  latestOverrideFlagsJson Json?
+  latestDecisionJson      Json?
+  letterText             String?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  evidenceRecords         DisputeEvidenceRecord[]
+  rounds                  DisputeRoundRecord[]
+  creditReportImports     CreditReportTradelineImport[]
+
+  @@index([disputeCaseId, status])
+  @@index([bureau, targetType])
+}
+
+model DisputeEvidenceRecord {
+  id                 String               @id @default(cuid())
+  disputeTradelineId String
+  disputeTradeline   DisputeTradelineRecord @relation(fields: [disputeTradelineId], references: [id], onDelete: Cascade)
+  label              String
+  type               String
+  contradictionValue Int?
+  primarySource      Boolean              @default(false)
+  tiedToNarrative    Boolean              @default(false)
+  tiedToDisputedItem Boolean              @default(false)
+  metadataJson       Json?
+  createdAt          DateTime             @default(now())
+
+  @@index([disputeTradelineId])
+}
+
+model DisputeRoundRecord {
+  id                 String            @id @default(cuid())
+  disputeCaseId      String
+  disputeCase        DisputeCaseRecord @relation(fields: [disputeCaseId], references: [id], onDelete: Cascade)
+  disputeTradelineId String?
+  disputeTradeline   DisputeTradelineRecord? @relation(fields: [disputeTradelineId], references: [id], onDelete: Cascade)
+  roundKind          DisputeRoundKind
+  stage              String
+  escalationOption   String?
+  triggeredBy        String?
+  notes              String?
+  resultSummaryJson  Json?
+  dueAt              DateTime?
+  createdAt          DateTime          @default(now())
+
+  @@index([disputeCaseId, createdAt])
+  @@index([disputeTradelineId])
+}
+
+model DisputeEngineRun {
+  id                  String            @id @default(cuid())
+  tenantId            String
+  tenant              Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  disputeCaseId       String
+  disputeCase         DisputeCaseRecord @relation(fields: [disputeCaseId], references: [id], onDelete: Cascade)
+  triggeredBy         String?
+  primaryObjective    String
+  hardStopsJson       Json?
+  softStopsJson       Json?
+  packetOrderJson     Json?
+  decisionSummaryJson Json?
+  createdAt           DateTime          @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([disputeCaseId, createdAt])
+}
+
+model CreditReportImport {
+  id                  String                   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  clientId            String
+  client              Client                   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  disputeCaseId       String?
+  disputeCase         DisputeCaseRecord?       @relation(fields: [disputeCaseId], references: [id], onDelete: SetNull)
+  sourceType          CreditReportSourceType   @default(STAFF_UPLOAD)
+  status              CreditReportImportStatus @default(UPLOADED)
+  providerLabel       String?
+  fileName            String?
+  originalFileName    String?
+  contentType         String?
+  storageProvider     String?
+  storagePath         String?
+  bucketName          String?
+  bureauCoverageJson  Json?
+  reportPulledAt      DateTime?
+  notes               String?
+  importedAt          DateTime?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  tradelines          CreditReportTradelineImport[]
+
+  @@index([tenantId, status])
+  @@index([clientId, createdAt])
+  @@index([disputeCaseId])
+}
+
+model CreditReportTradelineImport {
+  id                         String            @id @default(cuid())
+  creditReportImportId       String
+  creditReportImport         CreditReportImport @relation(fields: [creditReportImportId], references: [id], onDelete: Cascade)
+  disputeTradelineId         String?
+  disputeTradeline           DisputeTradelineRecord? @relation(fields: [disputeTradelineId], references: [id], onDelete: SetNull)
+  bureau                     String
+  targetType                 String
+  accountNumberMasked        String
+  accountType                String
+  theoryPrimary              String
+  remedyPrimary              String
+  furnisherName              String?
+  collectorName              String?
+  originalCreditor           String?
+  balance                    Float?
+  pastDue                    Float?
+  monthlyPayment             Float?
+  responseClass              String?
+  specialLane                String            @default("standard")
+  scoresJson                 Json
+  responseDefectsJson        Json?
+  deltaTypesJson             Json?
+  readinessSignalsJson       Json?
+  contradictionMetricsJson   Json?
+  notes                      String?
+  readyForEngine             Boolean           @default(true)
+  importedToDisputeCaseAt    DateTime?
+  createdAt                  DateTime          @default(now())
+  updatedAt                  DateTime          @updatedAt
+
+  @@index([creditReportImportId, createdAt])
+  @@index([disputeTradelineId])
+}

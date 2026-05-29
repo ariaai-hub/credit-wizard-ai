@@ -1,0 +1,69 @@
+<svg width="1200" height="780" viewBox="0 0 1200 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="780" rx="40" fill="#07111F"/>
+  <rect x="36" y="36" width="1128" height="708" rx="32" fill="url(#bg)" stroke="rgba(148,163,184,0.2)"/>
+
+  <rect x="84" y="84" width="456" height="612" rx="28" fill="#0B1629" stroke="#1E3A5F"/>
+  <text x="124" y="136" fill="#93C5FD" font-family="Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="2">SUPPORT AUTOMATION</text>
+  <text x="124" y="182" fill="white" font-family="Arial, sans-serif" font-size="36" font-weight="700">Client update flow</text>
+
+  <rect x="124" y="226" width="388" height="110" rx="20" fill="#0F2747" stroke="#2563EB"/>
+  <text x="152" y="266" fill="#BFDBFE" font-family="Arial, sans-serif" font-size="16" font-weight="700">Onboarding follow-up</text>
+  <text x="152" y="298" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="18">
+    <tspan x="152" dy="0">We are still waiting on</tspan>
+    <tspan x="152" dy="24">your final document.</tspan>
+  </text>
+
+  <rect x="156" y="364" width="356" height="110" rx="20" fill="#123860" stroke="#38BDF8"/>
+  <text x="184" y="404" fill="#BFDBFE" font-family="Arial, sans-serif" font-size="16" font-weight="700">Mailed notice</text>
+  <text x="184" y="436" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="18">
+    <tspan x="184" dy="0">Your dispute package has</tspan>
+    <tspan x="184" dy="24">been mailed.</tspan>
+  </text>
+
+  <rect x="124" y="502" width="388" height="110" rx="20" fill="#0F2747" stroke="#2563EB"/>
+  <text x="152" y="542" fill="#BFDBFE" font-family="Arial, sans-serif" font-size="16" font-weight="700">Results update</text>
+  <text x="152" y="574" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="18">
+    <tspan x="152" dy="0">New results are in and</tspan>
+    <tspan x="152" dy="24">your file is updated.</tspan>
+  </text>
+
+  <rect x="568" y="84" width="548" height="612" rx="28" fill="#091523" stroke="#1E3A5F"/>
+  <text x="608" y="140" fill="#93C5FD" font-family="Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="2">WHAT THE OWNER SEES</text>
+  <text x="608" y="186" fill="white" font-family="Arial, sans-serif" font-size="38" font-weight="700">Automated status coverage</text>
+
+  <rect x="608" y="232" width="468" height="144" rx="24" fill="#0E2038" stroke="#334155"/>
+  <text x="640" y="276" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="22" font-weight="700">
+    <tspan x="640" dy="0">Clients stay informed</tspan>
+    <tspan x="640" dy="28">without manual chasing</tspan>
+  </text>
+  <text x="640" y="334" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">
+    <tspan x="640" dy="0">Onboarding, mailed notices, results, wins,</tspan>
+    <tspan x="640" dy="24">and funding-ready movement can all be</tspan>
+    <tspan x="640" dy="24">handled inside one operating flow.</tspan>
+  </text>
+
+  <rect x="608" y="406" width="214" height="126" rx="24" fill="#0B2A49" stroke="#2563EB"/>
+  <text x="636" y="446" fill="#BFDBFE" font-family="Arial, sans-serif" font-size="16" font-weight="700">Manual updates avoided</text>
+  <text x="636" y="500" fill="white" font-family="Arial, sans-serif" font-size="46" font-weight="700">87%</text>
+
+  <rect x="862" y="406" width="214" height="126" rx="24" fill="#102B1E" stroke="#22C55E"/>
+  <text x="890" y="446" fill="#BBF7D0" font-family="Arial, sans-serif" font-size="16" font-weight="700">Client status sent</text>
+  <text x="890" y="500" fill="white" font-family="Arial, sans-serif" font-size="46" font-weight="700">24/7</text>
+
+  <rect x="608" y="558" width="468" height="138" rx="24" fill="#0E2038" stroke="#334155"/>
+  <text x="640" y="600" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="20" font-weight="700">
+    <tspan x="640" dy="0">The pitch gets easier when people</tspan>
+    <tspan x="640" dy="26">believe the backend is real.</tspan>
+  </text>
+  <text x="640" y="654" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">
+    <tspan x="640" dy="0">Show prospects a system that keeps clients informed,</tspan>
+    <tspan x="640" dy="24">reduces panic, and makes fulfillment look organized.</tspan>
+  </text>
+
+  <defs>
+    <linearGradient id="bg" x1="80" y1="36" x2="1120" y2="744" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1730"/>
+      <stop offset="1" stop-color="#102343"/>
+    </linearGradient>
+  </defs>
+</svg>
