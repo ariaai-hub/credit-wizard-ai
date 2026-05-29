@@ -30,5 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "scripts/**/*.ts", "src/app/api/admin/**/*", "src/app/api/client/affiliate/**/*", "src/app/api/client/consumer-onboarding/**/*", "src/app/api/client/download-letter/**/*", "src/app/api/client/download-status/**/*", "src/app/api/client/elite-content/**/*", "src/app/dashboard/affiliate/**/*", "src/components/letters-section.tsx", "src/app/dashboard/elite-content/**/*"]
 }

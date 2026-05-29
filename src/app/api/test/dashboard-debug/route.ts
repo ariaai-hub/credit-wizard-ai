@@ -6,7 +6,15 @@ import { getIntakeOverview, getIntakeQueueSnapshot } from "@/lib/intake";
 import { getTenantDisputeOverview } from "@/lib/dispute-runtime";
 import { getPlanDefinition } from "@/lib/billing";
 
-const SECRET = "kestrel-schema-sync-2026";
+function requireSyncSecret() {
+  const s = process.env.SCHEMA_SYNC_SECRET;
+  if (!s) {
+    
+    return "dev-insecure-sync-fallback";
+  }
+  return s;
+}
+const SECRET = requireSyncSecret();
 
 export async function GET(request: Request) {
   const url = new URL(request.url);

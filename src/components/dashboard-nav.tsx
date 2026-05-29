@@ -9,11 +9,12 @@ import { signOutAction } from "@/app/sign-out/actions";
 type DashboardNavProps = {
   role: string;
   email: string;
+  plan?: string | null;
   internalOwner?: boolean;
   isSuperAdmin?: boolean;
 };
 
-const companyNavItems = (isOwner: boolean) => [
+const companyNavItems = (isOwner: boolean, plan?: string | null) => [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/dashboard/clients", label: "Clients" },
   { href: "/dashboard/intake", label: "Client Snapshot" },
@@ -23,10 +24,16 @@ const companyNavItems = (isOwner: boolean) => [
   ...(isOwner
     ? [{ href: "/dashboard/mail", label: "Mail Queue" }]
     : [{ href: "/dashboard/mail-expenses", label: "Mail Expenses" }]),
+  ...(plan === "PRO" || plan === "ELITE"
+    ? [{ href: "/dashboard/affiliate", label: "Affiliate" }]
+    : []),
+  ...(plan === "ELITE"
+    ? [{ href: "/dashboard/elite-content", label: "Elite Content" }]
+    : []),
 ];
 
-const internalNavItems = (isSuperAdminEmail: boolean) => [
-  ...companyNavItems(true),
+const internalNavItems = (isSuperAdminEmail: boolean, plan?: string | null) => [
+  ...companyNavItems(true, plan),
   { href: "/dashboard/automation", label: "Automations" },
   { href: "/dashboard/integrations", label: "Integrations" },
   { href: "/dashboard/audit", label: "Audit" },
@@ -50,11 +57,11 @@ function formatRoleLabel(role: string) {
   }
 }
 
-export function DashboardNav({ role, email, internalOwner = false, isSuperAdmin = false }: DashboardNavProps) {
+export function DashboardNav({ role, email, plan, internalOwner = false, isSuperAdmin = false }: DashboardNavProps) {
   const pathname = usePathname();
   const navItems = internalOwner
-    ? internalNavItems(isSuperAdmin)
-    : companyNavItems(role === "OWNER");
+    ? internalNavItems(isSuperAdmin, plan)
+    : companyNavItems(role === "OWNER", plan);
 
   return (
     <aside className="hidden min-h-screen w-[290px] shrink-0 border-r border-white/10 bg-[#081120]/92 xl:block">

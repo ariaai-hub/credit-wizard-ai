@@ -7,7 +7,7 @@ import { getStripe } from "@/lib/stripe";
 import Link from "next/link";
 
 async function getOverviewData() {
-  const [tenants, clients, disputes] = await Promise.all([
+  const [tenants, clients, disputes, commissions] = await Promise.all([
     prisma.tenant.findMany({
       include: {
         subscriptions: {
@@ -22,6 +22,13 @@ async function getOverviewData() {
     }),
     prisma.disputeTradelineRecord.findMany({
       select: { id: true, status: true, responseClass: true, disputeCase: { select: { tenantId: true } } },
+    }),
+    prisma.referralCommission.findMany({
+      include: {
+        referrerTenant: { select: { name: true, plan: true } },
+        referredTenant: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
     }),
   ]);
 
@@ -69,14 +76,32 @@ async function getOverviewData() {
     totalDeletions: companies.reduce((s, c) => s + c.deletions, 0),
   };
 
-  return { companies, grandTotals };
+  // Affiliate commission summary
+  const affiliateSummary = {
+    totalCommissions: commissions.reduce((s, c) => s + c.amount, 0),
+    pendingCommissions: commissions.filter((c) => c.status === "PENDING").reduce((s, c) => s + c.amount, 0),
+    paidCommissions: commissions.filter((c) => c.status === "PAID").reduce((s, c) => s + c.amount, 0),
+    topAffiliates: Object.entries(
+      commissions.reduce<Record<string, { name: string; plan: string; total: number }>>((acc, comm) => {
+        const key = comm.referrerTenantId;
+        if (!acc[key]) acc[key] = { name: comm.referrerTenant.name || "Unknown", plan: comm.referrerTenant.plan || "", total: 0 };
+        acc[key].total += comm.amount;
+        return acc;
+      }, {})
+    )
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 10)
+      .map(([id, data]) => ({ id, ...data })),
+  };
+
+  return { companies, grandTotals, affiliateSummary };
 }
 
 export default async function SuperAdminPage() {
   const session = await requireSession();
   if (!isSuperAdmin(session.email)) redirect("/dashboard");
 
-  const { companies, grandTotals } = await getOverviewData();
+  const { companies, grandTotals, affiliateSummary } = await getOverviewData();
   const grandDeletionRate =
     grandTotals.totalDisputes > 0
       ? Math.round((grandTotals.totalDeletions / grandTotals.totalDisputes) * 100)
@@ -193,6 +218,61 @@ export default async function SuperAdminPage() {
                     </tr>
                   );
                 })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Affiliate commissions */}
+        <section className="public-surface p-6 md:p-8">
+          <div className="lux-label">Affiliate program</div>
+          <h2 className="mt-3 text-xl font-semibold text-white">Top affiliates</h2>
+
+          <div className="mt-5 grid grid-cols-3 gap-4">
+            <div className="public-surface-soft p-4 rounded-xl">
+              <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Total Paid Out</div>
+              <div className="mt-2 text-2xl font-semibold text-emerald-400">{formatCurrency(affiliateSummary.paidCommissions / 100)}</div>
+            </div>
+            <div className="public-surface-soft p-4 rounded-xl">
+              <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Pending</div>
+              <div className="mt-2 text-2xl font-semibold text-amber-400">{formatCurrency(affiliateSummary.pendingCommissions / 100)}</div>
+            </div>
+            <div className="public-surface-soft p-4 rounded-xl">
+              <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">All Time</div>
+              <div className="mt-2 text-2xl font-semibold text-white">{formatCurrency(affiliateSummary.totalCommissions / 100)}</div>
+            </div>
+          </div>
+
+          <div className="mt-5 overflow-hidden rounded-[1.2rem] border border-white/10 bg-[#091426]">
+            <table className="min-w-full text-sm">
+              <thead className="bg-white/[0.04] text-left text-slate-400">
+                <tr>
+                  <th className="px-5 py-4 font-medium">Affiliate</th>
+                  <th className="px-4 py-4 font-medium">Plan</th>
+                  <th className="px-4 py-4 font-medium text-right">Total Earned</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {affiliateSummary.topAffiliates.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-5 py-8 text-center text-slate-500">No affiliate commissions yet.</td>
+                  </tr>
+                )}
+                {affiliateSummary.topAffiliates.map((a) => (
+                  <tr key={a.id} className="hover:bg-white/[0.03] transition-colors">
+                    <td className="px-5 py-4 font-semibold text-white">{a.name}</td>
+                    <td className="px-4 py-4">
+                      {a.plan && (
+                        <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${
+                          a.plan === "ELITE" ? "border-amber-400/30 bg-amber-400/10 text-amber-300" :
+                          a.plan === "PRO" ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" :
+                          "border-blue-400/30 bg-blue-400/10 text-blue-300"
+                        }`}>{a.plan}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 text-right font-semibold text-emerald-400">{formatCurrency(a.total / 100)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

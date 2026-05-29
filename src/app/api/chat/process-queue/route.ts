@@ -2,7 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateAIResponse } from "@/lib/chat-ai";
 
-const CRON_SECRET = process.env.CRON_SECRET || "kestrel-cron-2026";
+function requireCronSecret() {
+  const s = process.env.CRON_SECRET;
+  if (!s) {
+    if (process.env.NODE_ENV === "production") throw new Error("CRON_SECRET required in production");
+    console.warn("[CRON] CRON_SECRET not set — using dev fallback");
+    return "dev-insecure-cron-fallback";
+  }
+  return s;
+}
+const CRON_SECRET = requireCronSecret();
 
 // Detect if a client message mentions a specific date/time they can do something
 function parseFollowUpFromMessage(content: string): Date | null {

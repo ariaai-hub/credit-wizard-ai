@@ -34,6 +34,15 @@ export type ClientPortalViewModel = {
     detail: string;
     readinessLabel: string;
   };
+  // Letter paywall
+  plan?: string | null;
+  letterDownloadInfo: {
+    allowed: boolean;
+    reason: "unlimited" | "available" | "limit_reached" | "upgrade_required" | null;
+    downloadsUsed: number | null;
+    downloadsLimit: number | null;
+    downloadsRemaining: number | null;
+  };
 };
 
 function formatStageLabel(stage: ClientLifecycleStage) {
@@ -167,6 +176,14 @@ export function buildClientPortalViewModel(input: {
   deletionCount: number;
   documentCount: number;
   requiredDocumentCount: number;
+  plan?: string | null;
+  letterDownloadInfo?: {
+    allowed: boolean;
+    reason: "unlimited" | "available" | "limit_reached" | "upgrade_required" | null;
+    downloadsUsed: number | null;
+    downloadsLimit: number | null;
+    downloadsRemaining: number | null;
+  };
 }): ClientPortalViewModel {
   const nextStep = getNextStep(input.lifecycleStage, input.providerStatus, input.providerName);
   const progressPercent = getProgressPercent(input.lifecycleStage, input.providerStatus);
@@ -284,5 +301,13 @@ export function buildClientPortalViewModel(input: {
     missingItemCount,
     supportStatusLabel: "Support online",
     fundingLane,
+    plan: input.plan ?? null,
+    letterDownloadInfo: input.letterDownloadInfo ?? {
+      allowed: true,
+      reason: "unlimited",
+      downloadsUsed: null,
+      downloadsLimit: null,
+      downloadsRemaining: null,
+    },
   };
 }

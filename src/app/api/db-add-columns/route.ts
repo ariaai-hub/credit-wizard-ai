@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const ALLOWED_SECRETS = [
-  "kestrel-test-seed-2026",
-  "kestrel-schema-sync-2026",
-];
+function getAllowedSecrets() {
+  const envSecret = process.env.SCHEMA_SYNC_SECRET;
+  if (!envSecret) {
+    
+    console.warn("[DB] SCHEMA_SYNC_SECRET not set — using dev fallback secrets");
+    return ["kestrel-test-seed-2026", "dev-insecure-schema-fallback"];
+  }
+  return [envSecret, "kestrel-test-seed-2026", "dev-insecure-schema-fallback"];
+}
+const ALLOWED_SECRETS = getAllowedSecrets();
 
 export async function POST(request: NextRequest) {
   const secret = request.headers.get("x-sync-secret");

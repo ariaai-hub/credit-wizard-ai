@@ -1,17 +1,43 @@
 "use client";
 
+import Link from "next/link";
 import { AnimatedCount } from "@/components/animated-count";
 import type { ClientPortalViewModel } from "@/lib/client-portal";
 
 type ClientPortalProps = {
   model: ClientPortalViewModel;
   previewLabel?: string;
+  /** B2B tenant plan — show upgrade prompt when on Starter */
+  currentPlan?: "STARTER" | "PRO" | "ELITE";
 };
 
-export function ClientPortal({ model, previewLabel }: ClientPortalProps) {
+export function ClientPortal({ model, previewLabel, currentPlan }: ClientPortalProps) {
+  const showUpgradePrompt = currentPlan === "STARTER";
+
   return (
     <main className="app-frame px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-10 text-white">
       <div className="mx-auto max-w-6xl grid gap-6">
+        {/* Upgrade prompt banner for Starter tenants */}
+        {showUpgradePrompt && (
+          <div className="rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="text-sm font-semibold text-sky-200">
+                  Upgrade available
+                </div>
+                <p className="mt-1 text-sm text-slate-300">
+                  Unlock unlimited dispute letters, premium templates, and priority support.
+                </p>
+              </div>
+              <Link
+                href="/dashboard/upgrade"
+                className="shrink-0 rounded-xl bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600"
+              >
+                Upgrade now →
+              </Link>
+            </div>
+          </div>
+        )}
         {/* Header — matches dashboard public-surface */}
         <header className="public-surface p-5 sm:p-8 lg:p-10">
           <div className="grid gap-6 xl:grid-cols-[1.06fr_0.94fr] xl:gap-8">

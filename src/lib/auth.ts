@@ -2,6 +2,9 @@ import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
+
+import { isSuperAdmin } from "@/lib/admin";
 
 const SESSION_COOKIE = "crb_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
@@ -14,7 +17,15 @@ type SessionPayload = {
 };
 
 function getSessionSecret() {
-  const secret = process.env.SESSION_SECRET ?? "dev-credit-repair-bot-session-secret";
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("SESSION_SECRET environment variable is required in production. Current value is undefined.");
+    }
+    // Fallback ONLY in non-production — do not use in production
+    console.warn("[AUTH] SESSION_SECRET not set. Using insecure dev fallback. Set SESSION_SECRET in production.");
+    return new TextEncoder().encode("dev-insecure-fallback-do-not-use-in-prod");
+  }
   return new TextEncoder().encode(secret);
 }
 
@@ -66,6 +77,17 @@ export async function requireSession() {
   const session = await getSession();
   if (!session) {
     redirect("/sign-in");
+  }
+  return session;
+}
+
+export async function requireSuperAdmin() {
+  const session = await getSession();
+  if (!session) {
+    redirect("/sign-in");
+  }
+  if (!isSuperAdmin(session.email)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   return session;
 }

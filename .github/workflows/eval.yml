@@ -1,0 +1,61 @@
+name: AI Evaluation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/lib/chat-ai.ts"
+      - "src/app/api/chat/**"
+      - "scripts/eval-bot.ts"
+  pull_request:
+    paths:
+      - "src/lib/chat-ai.ts"
+      - "src/app/api/chat/**"
+      - "scripts/eval-bot.ts"
+
+jobs:
+  eval:
+    name: Run AI Eval Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run AI Evaluation
+        run: npm run eval
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_MODEL: ${{ secrets.MINIMAX_MODEL || 'MiniMax-Text-01' }}
+          EVAL_VERBOSE: "1"
+
+      - name: Upload eval results
+        if: always()
+        run: |
+          echo "EVAL_EXIT_CODE=$?" >> $GITHUB_ENV
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## AI Evaluation Results
+            Date: ${new Date().toISOString()}
+            **Run: ${process.env.EVAL_EXIT_CODE === '0' ? '✅ PASSED' : '❌ FAILED'}**
+            See workflow logs for full output.`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });

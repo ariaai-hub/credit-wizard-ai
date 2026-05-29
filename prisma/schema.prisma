@@ -164,6 +164,8 @@ model Tenant {
   graceEndsAt         DateTime?
   suspendedAt         DateTime?
   logoUrl             String?
+  letterDownloadsThisMonth Int              @default(0)
+  lastDownloadMonth        String?            // "YYYY-MM" format, reset counter when month changes
   primaryColor        String                @default("#2563eb")
   accentColor         String                @default("#0ea5e9")
   defaultMailType     MailPreference       @default(REGULAR)
@@ -183,9 +185,28 @@ model Tenant {
   disputeEngineRuns   DisputeEngineRun[]
   creditReportImports CreditReportImport[]
   mailTokenAccount   MailTokenAccount?
+  affiliateBalance   Int                  @default(0) // in cents, accumulated commission
+  referredTenants   ReferralCommission[] @relation("Referrer")
+  referralCommissions ReferralCommission[] @relation("Referred")
 
   @@index([status])
   @@index([accessMode])
+}
+
+model ReferralCommission {
+  id               String    @id @default(cuid())
+  referrerTenantId String
+  referrerTenant   Tenant    @relation("Referrer", fields: [referrerTenantId], references: [id], onDelete: Cascade)
+  referredTenantId String
+  referredTenant   Tenant    @relation("Referred", fields: [referredTenantId], references: [id], onDelete: Cascade)
+  amount           Int       // in cents
+  status           String    @default("PENDING") // PENDING | PAID | CANCELLED
+  createdAt        DateTime  @default(now())
+  paidAt           DateTime?
+
+  @@index([referrerTenantId])
+  @@index([referredTenantId])
+  @@index([status])
 }
 
 model MailTokenAccount {
@@ -234,6 +255,9 @@ model Client {
   lifecycleStage         ClientLifecycleStage @default(INTAKE_RECEIVED)
   onboardingCompletedAt  DateTime?
   onboardingToken        String?              @unique
+  onboardingSource       String?
+  onboardingGoal         String?
+  bureausChecked         String?
   trackingNumber         String?
   mailSentAt             DateTime?
   createdAt              DateTime             @default(now())
@@ -637,4 +661,18 @@ model CreditReportTradelineImport {
 
   @@index([creditReportImportId, createdAt])
   @@index([disputeTradelineId])
+}
+
+// Elite content — email sequences, swipe files, ad copy, etc.
+// Serves to Elite plan members via /dashboard/elite-content
+model EliteContent {
+  id          String   @id @default(cuid())
+  category    String   // "email-sequences" | "social-swipe" | "referral-templates" | "lead-magnets" | "compliance-kit" | "ad-copy"
+  title       String
+  description String?
+  content     String   // HTML body
+  tags        String?  // comma-separated
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

@@ -112,7 +112,7 @@ async function handleStripeEvent(event: Stripe.Event, stripe: Stripe) {
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripe: Stripe) {
   // Only handle B2C public signups — identified by publicSignup=true metadata
-  const isPublicSignup = session.metadata?.publicSignup === "true";
+  const isPublicSignup = session.metadata?.publicSignup === "true" || session.metadata?.signupSource === "public-signup-consumer";
   if (!isPublicSignup) return;
 
   const stripeCustomerId =
@@ -130,7 +130,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripe:
   // Find the consumer tenant by stripeCustomerId first, fallback to email
   let tenant = await prisma.tenant.findUnique({
     where: { stripeCustomerId },
-    select: { id: true },
+    select: { id: true, referredBy: true },
   });
 
       if (!tenant) {
@@ -140,7 +140,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripe:
           if (!("deleted" in customer) && customer.email) {
             tenant = await prisma.tenant.findFirst({
               where: { billingEmail: { equals: customer.email, mode: "insensitive" } },
-              select: { id: true },
+              select: { id: true, referredBy: true },
             });
           }
         } catch {
@@ -194,6 +194,38 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripe:
         },
       },
     });
+  }
+
+  // Credit affiliate referrer if this tenant was referred
+  if (plan && tenant.referredBy) {
+    // Look up referrer by their referral code
+    const referrer = await prisma.tenant.findUnique({
+      where: { referralCode: tenant.referredBy },
+      select: { id: true, plan: true },
+    });
+
+    if (referrer && (referrer.plan === "PRO" || referrer.plan === "ELITE")) {
+      // Dynamically import to avoid circular deps and keep webhook cold-start fast
+      const { creditAffiliateCommission } = await import("@/lib/affiliate");
+      const credited = await creditAffiliateCommission(referrer.id, tenant.id, plan);
+      if (credited.success) {
+        await prisma.auditLog.create({
+          data: {
+            tenantId: referrer.id,
+            actorType: "system",
+            eventType: "B2C_REFERRAL_COMMISSION_CREDITED",
+            referenceType: "referral_commission",
+            referenceId: credited.commissionId,
+            inputSnapshotJson: {
+              commissionId: credited.commissionId,
+              amountCents: credited.amountCents,
+              referredTenantId: tenant.id,
+              plan,
+            },
+          },
+        });
+      }
+    }
   }
 }
 
@@ -413,7 +445,7 @@ async function handleLegacyStripeEvent(event: Stripe.Event, stripe: Stripe) {
 
       // Subscription checkout (existing B2B flow)
       if (session.mode === "subscription" && typeof session.subscription === "string") {
-        const isPublicSignup = session.metadata?.publicSignup === "true";
+        const isPublicSignup = session.metadata?.publicSignup === "true" || session.metadata?.signupSource === "public-signup-consumer";
 
         if (isPublicSignup) {
           const subscriptionRecord = await prisma.billingSubscription.findFirst({

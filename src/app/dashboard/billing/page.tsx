@@ -22,6 +22,14 @@ async function getTokenBalance(tenantId: string) {
   };
 }
 
+async function getTenantPlan(tenantId: string) {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: { plan: true },
+  });
+  return (tenant?.plan ?? "STARTER") as string;
+}
+
 async function getQueuedMailCount(tenantId: string) {
   return prisma.client.count({ where: { tenantId, lifecycleStage: "MAIL_QUEUED" } });
 }
@@ -36,9 +44,10 @@ export default async function BillingPage({
   const portalError = readValue(resolvedSearchParams.portalError);
   const setupStatus = readValue(resolvedSearchParams.setup);
 
-  const [tokenBal, queuedCount] = await Promise.all([
+  const [tokenBal, queuedCount, tenantPlan] = await Promise.all([
     getTokenBalance(session.tenantId),
     getQueuedMailCount(session.tenantId),
+    getTenantPlan(session.tenantId),
   ]);
 
   const queuedCost = queuedCount * MAIL_CHARGE_RULES.CERTIFIED_MAIL; // worst case
@@ -55,6 +64,35 @@ export default async function BillingPage({
             Choose the plan that fits your company, buy extra tokens when needed, and manage your payment method.
           </p>
         </header>
+
+        {/* Change plan */}
+        <section className="public-surface p-6 md:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="lux-label">Your plan</div>
+              <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-white">
+                {tenantPlan === "PRO" ? "Pro" : tenantPlan === "ELITE" ? "Elite" : "Starter"}
+              </h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Next billing date and usage limits are managed through Stripe.
+              </p>
+            </div>
+            <div className="flex flex-col items-start gap-3 lg:items-end">
+              <Link
+                href="/dashboard/upgrade"
+                className="rounded-xl bg-sky-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-sky-600"
+              >
+                Change Plan →
+              </Link>
+              <a
+                href="/api/stripe/portal"
+                className="text-sm text-slate-400 transition hover:text-white"
+              >
+                Cancel subscription →
+              </a>
+            </div>
+          </div>
+        </section>
 
         {/* Token balance + top-up alert */}
         <section className="grid gap-4 md:grid-cols-2">

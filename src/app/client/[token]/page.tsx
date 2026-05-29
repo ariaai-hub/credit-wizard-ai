@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
 
+import type { Plan } from "@prisma/client";
+
 import { SubmitButton } from "@/components/submit-button";
 import { ClientPortal } from "@/components/client-portal";
 import { ChatWidget } from "@/components/chat-widget";
+import { LettersSection } from "@/components/letters-section";
 import {
   getClientPortalDocumentActivity,
   verifyClientPortalAccessToken,
@@ -29,31 +32,82 @@ export default async function ClientPortalAccessPage({
   const payload = await verifyClientPortalAccessToken(token);
   if (!payload) notFound();
 
-  const [client, integrationSnapshot, documentActivity, negativeItemCount, submittedDisputeCount, deletionCount] =
-    await Promise.all([
-      prisma.client.findFirst({
-        where: { id: payload.clientId, tenantId: payload.tenantId },
-      }),
-      getTenantIntegrationSnapshot(payload.tenantId),
-      getClientPortalDocumentActivity({ tenantId: payload.tenantId, clientId: payload.clientId }),
-      prisma.disputeTradelineRecord.count({
-        where: { disputeCase: { tenantId: payload.tenantId, clientId: payload.clientId } },
-      }),
-      prisma.disputeTradelineRecord.count({
-        where: {
-          disputeCase: { tenantId: payload.tenantId, clientId: payload.clientId },
-          status: { in: ["DISPUTED", "MONITORING", "ESCALATED", "RESOLVED"] },
-        },
-      }),
-      prisma.disputeTradelineRecord.count({
-        where: {
-          disputeCase: { tenantId: payload.tenantId, clientId: payload.clientId },
-          responseClass: "deleted",
-        },
-      }),
-    ]);
+  const [
+    client,
+    tenant,
+    integrationSnapshot,
+    documentActivity,
+    negativeItemCount,
+    submittedDisputeCount,
+    deletionCount,
+    letters,
+  ] = await Promise.all([
+    prisma.client.findFirst({
+      where: { id: payload.clientId, tenantId: payload.tenantId },
+    }),
+    prisma.tenant.findUnique({
+      where: { id: payload.tenantId },
+      select: { id: true, plan: true, letterDownloadsThisMonth: true, lastDownloadMonth: true },
+    }),
+    getTenantIntegrationSnapshot(payload.tenantId),
+    getClientPortalDocumentActivity({ tenantId: payload.tenantId, clientId: payload.clientId }),
+    prisma.disputeTradelineRecord.count({
+      where: { disputeCase: { tenantId: payload.tenantId, clientId: payload.clientId } },
+    }),
+    prisma.disputeTradelineRecord.count({
+      where: {
+        disputeCase: { tenantId: payload.tenantId, clientId: payload.clientId },
+        status: { in: ["DISPUTED", "MONITORING", "ESCALATED", "RESOLVED"] },
+      },
+    }),
+    prisma.disputeTradelineRecord.count({
+      where: {
+        disputeCase: { tenantId: payload.tenantId, clientId: payload.clientId },
+        responseClass: "deleted",
+      },
+    }),
+    // Letters with letter text — only those that have been generated
+    prisma.disputeTradelineRecord.findMany({
+      where: {
+        disputeCase: { tenantId: payload.tenantId, clientId: payload.clientId },
+        letterText: { not: null },
+        bureau: { not: "" },
+      },
+      select: {
+        id: true,
+        bureau: true,
+        furnisherName: true,
+        accountType: true,
+        accountNumberMasked: true,
+        balance: true,
+        letterText: true,
+        status: true,
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
 
   if (!client) notFound();
+
+  // Build letter download info from tenant
+  const STARTER_LIMIT = 3;
+  const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+  const tenantPlan = (tenant?.plan as Plan | null) ?? null;
+  const isNewMonth = tenant?.lastDownloadMonth !== currentMonth;
+  const downloadsUsed = isNewMonth ? 0 : (tenant?.letterDownloadsThisMonth ?? 0);
+  const isProOrElite = tenantPlan === "PRO" || tenantPlan === "ELITE";
+
+  const letterDownloadInfo = isProOrElite
+    ? { allowed: true as const, reason: "unlimited" as const, downloadsUsed: null, downloadsLimit: null, downloadsRemaining: null }
+    : tenantPlan === "STARTER"
+    ? {
+        allowed: downloadsUsed < STARTER_LIMIT,
+        reason: downloadsUsed >= STARTER_LIMIT ? "limit_reached" as const : "available" as const,
+        downloadsUsed,
+        downloadsLimit: STARTER_LIMIT,
+        downloadsRemaining: Math.max(STARTER_LIMIT - downloadsUsed, 0),
+      }
+    : { allowed: false as const, reason: "upgrade_required" as const, downloadsUsed: 0, downloadsLimit: 0, downloadsRemaining: 0 };
 
   const requiredDocumentTypes = ["identity_document", "proof_of_address", "credit_report"];
   const uploadedDocumentTypes = new Set(
@@ -88,6 +142,8 @@ export default async function ClientPortalAccessPage({
     deletionCount,
     documentCount,
     requiredDocumentCount: requiredDocumentTypes.length,
+    plan: tenantPlan,
+    letterDownloadInfo,
   });
 
   const submitDocumentAction = submitClientPortalDocumentAction.bind(null, token);
@@ -98,6 +154,14 @@ export default async function ClientPortalAccessPage({
 
       {/* Floating chat widget — replaces old message support section */}
       <ChatWidget token={token} clientName={client.firstName} />
+
+      {/* Letters section — download paywall */}
+      <LettersSection
+        letters={letters}
+        token={token}
+        initialDownloadInfo={letterDownloadInfo}
+        plan={tenantPlan}
+      />
 
       <section className="px-4 pb-6 sm:px-6 md:px-10 bg-transparent">
         <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">

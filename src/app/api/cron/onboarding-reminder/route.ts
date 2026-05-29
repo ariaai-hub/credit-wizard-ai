@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const CRON_SECRET = process.env.CRON_SECRET ?? "kestrel-cron-2026";
+function requireCronSecret() {
+  const s = process.env.CRON_SECRET;
+  if (!s) {
+    if (process.env.NODE_ENV === "production") throw new Error("CRON_SECRET required in production");
+    console.warn("[CRON] CRON_SECRET not set — using dev fallback");
+    return "dev-insecure-cron-fallback";
+  }
+  return s;
+}
+const CRON_SECRET = requireCronSecret();
 const REMINDER_GAP_HOURS = 12;
 const MAX_CLIENTS_PER_RUN = 50;
 

@@ -125,6 +125,21 @@ export default function GetStartedPage() {
           </div>
         </section>
 
+        {/* Guarantee */}
+        <section className="rounded-[1.75rem] border border-emerald-500/20 bg-gradient-to-b from-emerald-500/8 to-transparent p-8 text-center">
+          <div className="mx-auto max-w-2xl">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <svg className="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+              <span className="text-2xl font-bold text-white">30-Day Money-Back Guarantee</span>
+            </div>
+            <p className="text-base text-slate-300 leading-relaxed">
+              If you're not satisfied with your letter generation and portal access within the first 30 days, we'll refund your first month — no questions asked. We only want your money if the product actually works for you.
+            </p>
+          </div>
+        </section>
+
         {/* Pricing */}
         <section id="pricing" className="public-surface p-6 md:p-8">
           <div className="lux-label">Pricing</div>
@@ -161,7 +176,7 @@ export default function GetStartedPage() {
                 ))}
               </ul>
               <Link
-                href="/sign-up?plan=starter"
+                href="/get-started/sign-up?plan=starter"
                 className="mt-6 flex h-11 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white transition hover:bg-blue-500"
               >
                 Get started
@@ -197,7 +212,7 @@ export default function GetStartedPage() {
                 ))}
               </ul>
               <Link
-                href="/sign-up?plan=pro"
+                href="/get-started/sign-up?plan=pro"
                 className="mt-6 flex h-11 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white transition hover:bg-emerald-500"
               >
                 Get started
@@ -233,7 +248,7 @@ export default function GetStartedPage() {
                 ))}
               </ul>
               <Link
-                href="/sign-up?plan=elite"
+                href="/get-started/sign-up?plan=elite"
                 className="mt-6 flex h-11 items-center justify-center rounded-full bg-amber-600 text-sm font-semibold text-white transition hover:bg-amber-500"
               >
                 Get started

@@ -32,7 +32,14 @@ type ClientPortalTokenPayload = {
 };
 
 function getClientPortalSecret() {
-  const secret = process.env.CLIENT_PORTAL_SECRET ?? process.env.SESSION_SECRET ?? "dev-credit-repair-bot-client-portal-secret";
+  const secret = process.env.CLIENT_PORTAL_SECRET ?? process.env.SESSION_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("CLIENT_PORTAL_SECRET or SESSION_SECRET environment variable is required in production.");
+    }
+    console.warn("[CLIENT-ACCESS] CLIENT_PORTAL_SECRET/SESSION_SECRET not set. Using insecure dev fallback.");
+    return new TextEncoder().encode("dev-insecure-client-portal-fallback");
+  }
   return new TextEncoder().encode(secret);
 }
 

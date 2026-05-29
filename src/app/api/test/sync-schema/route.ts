@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const SYNC_SECRET = "kestrel-schema-sync-2026";
+function requireSyncSecret() {
+  const s = process.env.SCHEMA_SYNC_SECRET;
+  if (!s) {
+    
+    console.warn("[DB] SCHEMA_SYNC_SECRET not set — using dev fallback");
+    return "dev-insecure-sync-fallback";
+  }
+  return s;
+}
+const SYNC_SECRET = requireSyncSecret();
 
 export async function POST(request: Request) {
   const url = new URL(request.url);
