@@ -7,7 +7,7 @@ on:
     branches: [master]
 
 jobs:
-  quality-gate:
+  typecheck-and-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,43 +28,24 @@ jobs:
         env:
           NODE_ENV: production
 
-  test-e2e:
+  smoke-test:
     runs-on: ubuntu-latest
+    needs: [typecheck-and-build]
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install
-        run: npm ci
-
-      - name: Install Playwright
-        run: npx playwright install --with-deps chromium
-
-      - name: Build
-        run: npm run build
-
-      - name: Start server
-        run: npm start &
-        timeout: 30
-
-      - name: Run E2E checks
-        run: npx playwright test --reporter=list 2>&1 | tail -20 || echo "No tests configured yet"
-
       - name: Smoke test key routes
         run: |
-          sleep 5
-          curl -s -o /dev/null -w "%{http_code}" https://credit-lounge-academy.vercel.app/get-started
-          echo " /get-started"
-          curl -s -o /dev/null -w "%{http_code}" https://credit-lounge-academy.vercel.app/pricing
-          echo " /pricing"
+          echo "Testing production deployment..."
+          STATUS1=$(curl -s -o /dev/null -w "%{http_code}" https://credit-lounge-academy.vercel.app/get-started)
+          echo "/get-started: $STATUS1"
+          STATUS2=$(curl -s -o /dev/null -w "%{http_code}" https://credit-lounge-academy.vercel.app/pricing)
+          echo "/pricing: $STATUS2"
+          STATUS3=$(curl -s -o /dev/null -w "%{http_code}" https://credit-lounge-academy.vercel.app/)
+          echo "/: $STATUS3"
+          if [ "$STATUS1" != "200" ] || [ "$STATUS2" != "200" ] || [ "$STATUS3" != "200" ]; then exit 1; fi
 
   deploy-preview:
-    needs: [quality-gate, test-e2e]
     runs-on: ubuntu-latest
+    needs: [typecheck-and-build]
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
