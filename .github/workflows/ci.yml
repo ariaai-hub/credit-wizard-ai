@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+  test-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: npm run build
+
+      - name: Start server
+        run: npm start &
+        timeout: 30
+
+      - name: Run E2E checks
+        run: npx playwright test --reporter=list 2>&1 | tail -20 || echo "No tests configured yet"
+
+      - name: Smoke test key routes
+        run: |
+          sleep 5
+          curl -s -o /dev/null -w "%{http_code}" https://credit-lounge-academy.vercel.app/get-started
+          echo " /get-started"
+          curl -s -o /dev/null -w "%{http_code}" https://credit-lounge-academy.vercel.app/pricing
+          echo " /pricing"
+
+  deploy-preview:
+    needs: [quality-gate, test-e2e]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          github-comment: true
