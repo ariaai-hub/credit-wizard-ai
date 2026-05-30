@@ -24,9 +24,12 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Build
-        run: npm run build
-        env:
-          NODE_ENV: production
+        run: |
+          echo "=== BUILD START ==="
+          npm run build 2>&1
+          BUILD_EXIT=$?
+          echo "=== BUILD EXIT CODE: $BUILD_EXIT ==="
+          exit $BUILD_EXIT
 
   smoke-test:
     runs-on: ubuntu-latest
