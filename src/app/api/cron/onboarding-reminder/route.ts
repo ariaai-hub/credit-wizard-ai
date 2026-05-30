@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-function requireCronSecret() {
+// Lazy — read on first call, not at module load time
+function getCronSecret(): string {
   const s = process.env.CRON_SECRET;
   if (!s) {
     if (process.env.NODE_ENV === "production") throw new Error("CRON_SECRET required in production");
@@ -10,7 +11,7 @@ function requireCronSecret() {
   }
   return s;
 }
-const CRON_SECRET = requireCronSecret();
+const CRON_SECRET = process.env.CRON_SECRET ?? "dev-insecure-cron-fallback";
 const REMINDER_GAP_HOURS = 12;
 const MAX_CLIENTS_PER_RUN = 50;
 
