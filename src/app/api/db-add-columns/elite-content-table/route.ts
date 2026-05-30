@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 const SCHEMA_SYNC_SECRET = process.env.SCHEMA_SYNC_SECRET ?? "dev-insecure-schema-sync-fallback";
