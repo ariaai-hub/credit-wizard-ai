@@ -307,14 +307,28 @@ export type DisputeCase = {
   tradelines: TradelineCase[];
 };
 
+export type LetterType =
+  | "bureau_dispute"
+  | "identity_theft_block"
+  | "direct_furnisher"
+  | "contradiction"
+  | "cfpb_escalation"
+  | "state_ag"
+  | "pre_claim"
+  | "arbitration"
+  | "suppress";
+
 export type TradelineEvaluation = {
   tradeline: TradelineCase;
   hardStops: DisputeHardStop[];
   softStops: DisputeSoftStop[];
+  softStopWarnings: string[];
   nextStage: DisputeStage;
   escalationOption?: EscalationOption;
   blockEligible: boolean;
   resistanceLabel: "weak resistance" | "moderate resistance" | "strong resistance" | "elite resistance";
+  humanReviewRequired: boolean;
+  letterType: LetterType;
 };
 
 export type DisputeCaseEvaluation = {
@@ -623,6 +637,7 @@ export function isIdentityTheftBlockEligible(tradeline: TradelineCase) {
 export function evaluateTradeline(caseFile: DisputeCase, tradeline: TradelineCase): TradelineEvaluation {
   const hardStops: DisputeHardStop[] = [];
   const softStops: DisputeSoftStop[] = [];
+  const softStopWarnings: string[] = [];
   const blockEligible = isIdentityTheftBlockEligible(tradeline);
   const resistance = scoreConclusiveVerificationResistance(tradeline);
   const hasMeaningfulDelta = (tradeline.deltaTypes?.length ?? 0) > 0;
@@ -634,6 +649,7 @@ export function evaluateTradeline(caseFile: DisputeCase, tradeline: TradelineCas
 
   if (!hasEvidenceOrContradiction) {
     softStops.push("overbroad_omnibus_packet");
+    softStopWarnings.push("Packet contains no specific evidence or contradiction — adjust tone to avoid frivolous language.");
   }
 
   if (tradeline.precisePriorCraDispute && !hasMeaningfulDelta) {
@@ -650,10 +666,12 @@ export function evaluateTradeline(caseFile: DisputeCase, tradeline: TradelineCas
 
   if (tradeline.responseClass === "frivolous_or_irrelevant_notice") {
     softStops.push("page_padding_without_relevance");
+    softStopWarnings.push("Frivolous/irrelevant notice flagged — trim packet to relevant material only.");
   }
 
   if (tradeline.specialLane !== "statutory_block" && tradeline.specialLane !== "identity_theft" && tradeline.theoryPrimary.includes(" and ")) {
     softStops.push("multi-theory_confusion");
+    softStopWarnings.push("Multiple theories combined in one lane — consider splitting or clarifying primary theory.");
   }
 
   if (tradeline.responseDefects.includes("verified_despite_cross_bureau_conflict") || tradeline.responseDefects.includes("verified_despite_furnisher_conflict")) {
@@ -661,10 +679,13 @@ export function evaluateTradeline(caseFile: DisputeCase, tradeline: TradelineCas
       tradeline,
       hardStops,
       softStops,
+      softStopWarnings,
       nextStage: "complaint_escalation",
       escalationOption: "CFPB_complaint",
       blockEligible,
       resistanceLabel: resistance.label,
+      humanReviewRequired: hardStops.length > 0,
+      letterType: "cfpb_escalation",
     };
   }
 
@@ -673,10 +694,13 @@ export function evaluateTradeline(caseFile: DisputeCase, tradeline: TradelineCas
       tradeline,
       hardStops,
       softStops,
+      softStopWarnings,
       nextStage: "pre_claim",
       escalationOption: "pre_claim_notice",
       blockEligible,
       resistanceLabel: resistance.label,
+      humanReviewRequired: hardStops.length > 0,
+      letterType: "pre_claim",
     };
   }
 
@@ -685,10 +709,13 @@ export function evaluateTradeline(caseFile: DisputeCase, tradeline: TradelineCas
       tradeline,
       hardStops,
       softStops,
+      softStopWarnings,
       nextStage: "contradiction_round",
       escalationOption: "bureau_round",
       blockEligible,
       resistanceLabel: resistance.label,
+      humanReviewRequired: hardStops.length > 0,
+      letterType: "contradiction",
     };
   }
 
@@ -697,26 +724,94 @@ export function evaluateTradeline(caseFile: DisputeCase, tradeline: TradelineCas
       tradeline,
       hardStops,
       softStops,
+      softStopWarnings,
       nextStage: "complaint_escalation",
       escalationOption: "CFPB_complaint",
       blockEligible,
       resistanceLabel: resistance.label,
+      humanReviewRequired: hardStops.length > 0,
+      letterType: "identity_theft_block",
     };
   }
 
-  if (tradeline.targetType.toLowerCase().includes("furnisher")) {
-    if (!tradeline.directFurnisherSufficiencyPassed) {
-      hardStops.push("direct_furnisher_lane_without_sufficiency_check");
-    }
+  // Determine letterType before hard-stop overrides (based on current lane state)
+  let letterType: LetterType = "bureau_dispute";
+  if (tradeline.specialLane === "identity_theft" || tradeline.specialLane === "statutory_block") {
+    letterType = "identity_theft_block";
+  } else if (tradeline.targetType.toLowerCase().includes("furnisher")) {
+    letterType = "direct_furnisher";
+  }
 
+  // Hard-stop overrides: must set nextStage to prevent wrong letter generation
+  if (hardStops.includes("identity_theft_lane_without_required_package")) {
     return {
       tradeline,
       hardStops,
       softStops,
+      softStopWarnings,
+      nextStage: "stage_0_intake",
+      blockEligible,
+      resistanceLabel: resistance.label,
+      humanReviewRequired: true,
+      letterType: "identity_theft_block",
+    };
+  }
+
+  if (hardStops.includes("direct_furnisher_lane_without_sufficiency_check")) {
+    return {
+      tradeline,
+      hardStops,
+      softStops,
+      softStopWarnings,
+      nextStage: "stage_0_intake",
+      escalationOption: "direct_furnisher_round",
+      blockEligible,
+      resistanceLabel: resistance.label,
+      humanReviewRequired: true,
+      letterType: "direct_furnisher",
+    };
+  }
+
+  if (hardStops.includes("dispute_of_known_accurate_information")) {
+    return {
+      tradeline,
+      hardStops,
+      softStops,
+      softStopWarnings,
+      nextStage: "monitoring",
+      blockEligible,
+      resistanceLabel: resistance.label,
+      humanReviewRequired: true,
+      letterType: "suppress",
+    };
+  }
+
+  if (hardStops.includes("duplicate_round_without_meaningful_delta")) {
+    return {
+      tradeline,
+      hardStops,
+      softStops,
+      softStopWarnings,
+      nextStage: "monitoring",
+      blockEligible,
+      resistanceLabel: resistance.label,
+      humanReviewRequired: false,
+      letterType: "suppress",
+    };
+  }
+
+  if (tradeline.targetType.toLowerCase().includes("furnisher")) {
+    return {
+      tradeline,
+      hardStops,
+      softStops,
+      softStopWarnings,
       nextStage: "furnisher_round_1",
       escalationOption: "direct_furnisher_round",
       blockEligible,
       resistanceLabel: resistance.label,
+      humanReviewRequired: false,
+      letterType,
     };
   }
 
@@ -724,10 +819,13 @@ export function evaluateTradeline(caseFile: DisputeCase, tradeline: TradelineCas
     tradeline,
     hardStops,
     softStops,
+    softStopWarnings,
     nextStage: "bureau_round_1",
     escalationOption: "bureau_round",
     blockEligible,
     resistanceLabel: resistance.label,
+    humanReviewRequired: false,
+    letterType,
   };
 }
 
