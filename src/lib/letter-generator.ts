@@ -145,6 +145,198 @@ function getCreditorName(tradeline: TradelineCase): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Letter 0b: Furnisher Direct Notice Letter — FCRA § 1681s-2(b)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function furnisherDirectNoticeLetter(request: LetterRequest): string {
+  const { client, tradeline, bureau, caseFile } = request;
+  const furnisher = getCreditorName(tradeline);
+
+  const exhibits: string[] = [
+    "Copy of Credit Report with disputed item highlighted",
+    "Supporting documentation evidencing inaccuracy or incompleteness",
+    "Proof of prior CRA dispute and reinvestigation response (if any)",
+  ];
+
+  const subject = `DIRECT NOTICE TO FURNISHER — FCRA § 1681s-2(b) | DEMAND FOR INVESTIGATION\nAccount: ${safeMask(tradeline.accountNumberMasked)} | Creditor: ${furnisher}`;
+
+  let body = buildHeader(bureau, caseFile, tradeline, subject, exhibits);
+
+  body += `DIRECT NOTICE TO FURNISHER — FAIR CREDIT REPORTING ACT § 1681s-2(b)
+Demand for Investigation and Correction | 30-Day Notice
+
+Date: ${today()}
+
+${furnisher}
+[Designated Address for Consumer Disputes]
+
+RE: Direct Dispute Notice — Consumer Credit Reporting Information
+Consumer: ${client.fullName}
+Date of Birth: ${client.dateOfBirth}
+Current Address: ${client.currentAddress}
+SSN: ****
+Account: ${safeMask(tradeline.accountNumberMasked)}
+Account Type: ${tradeline.accountType ?? "Unknown"}
+Status: ${tradeline.status ?? "N/A"}
+Balance: ${tradeline.balance !== undefined ? `\$${tradeline.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "N/A"}
+
+──────────────────────────────────────────────────
+NOTICE OF DIRECT DISPUTE — 15 U.S.C. § 1681s-2(b)
+──────────────────────────────────────────────────
+
+Dear Sir or Madam:
+
+I am writing to formally notify ${furnisher} ("Furnisher") as the furnisher of consumer credit information of a direct dispute pursuant to 15 U.S.C. § 1681s-2(b)(1)(A). This letter is sent directly to the Furnisher, not through a consumer reporting agency, and constitutes a separate and independent dispute notice.
+
+I dispute the above-referenced account information that ${furnisher} has reported to consumer reporting agencies, including ${BUREAU_ADDRESSES[bureau].name}. I believe this information is inaccurate, incomplete, and/or unauthorized.
+
+──────────────────────────────────────────────────
+LEGAL BASIS — 15 U.S.C. § 1681s-2(b)
+──────────────────────────────────────────────────
+
+Pursuant to 15 U.S.C. § 1681s-2(b)(1)(A), upon receiving a direct dispute notice from a consumer, the furnisher shall conduct a reasonable investigation of the disputed information and review all relevant information provided by the consumer.
+
+Pursuant to 15 U.S.C. § 1681s-2(b)(1)(D), if the furnisher finds that the information is incomplete or inaccurate, the furnisher shall promptly notify each consumer reporting agency to which the furnisher provided the incorrect or incomplete information and provide the corrected information.
+
+Pursuant to 15 U.S.C. § 1681s-2(b)(1)(E), if the furnisher determines that the information is accurate and complete, the furnisher shall notify the consumer in writing of the determination, including the specific records and documents relied upon.
+
+──────────────────────────────────────────────────
+CONSEQUENCE OF FAILURE TO RESPOND
+──────────────────────────────────────────────────
+
+If the Furnisher fails to conduct a reasonable investigation and report its findings within thirty (30) days of receipt of this notice, the Furnisher is advised that:
+
+1. Consumer reporting agencies are authorized under 15 U.S.C. § 1681i(a)(5)(B) to delete information that cannot be verified or where the furnisher fails to respond within the reinvestigation period;
+2. Failure to fulfill investigation obligations may constitute a violation of 15 U.S.C. § 1681s-2(b);
+3. The consumer reserves all rights and remedies under 15 U.S.C. § 1681n (willful noncompliance) and § 1681o (negligent noncompliance), including the right to seek statutory damages of not less than $100 and not more than $1,000 per violation, together with attorney's fees and costs.
+
+NOTICE OF POTENTIAL CIVIL LIABILITY: Pursuant to 15 U.S.C. § 1681n, any furnisher that willfully fails to comply with its obligations under the Fair Credit Reporting Act with respect to the consumer's credit file may be liable to the consumer for statutory damages of not less than $100 and not more than $1,000 per violation, together with attorney's fees and costs, and where willful, punitive damages. The consumer hereby puts the Furnisher on notice of potential liability for continued failure to comply with federal law.
+
+──────────────────────────────────────────────────
+DEMAND FOR INVESTIGATION
+──────────────────────────────────────────────────
+
+I respectfully demand that the Furnisher:
+
+1. Conduct a prompt and thorough investigation of the above-referenced account information;
+2. Review all relevant information and documentation provided herein;
+3. Correct any inaccurate, incomplete, or unverifiable information and report the correction to all relevant consumer reporting agencies;
+4. If the information is accurate and complete, provide written notice to the consumer specifying the specific records and documents relied upon;
+5. Respond within thirty (30) days of receipt of this notice.
+
+──────────────────────────────────────────────────
+`;
+
+  body += buildDeclaration(client);
+  body += buildExhibits(exhibits);
+
+  body += `This letter constitutes a formal direct dispute notice to the Furnisher under 15 U.S.C. § 1681s-2(b). The Furnisher's failure to investigate and respond within thirty (30) days may result in deletion of the information by consumer reporting agencies and may subject the Furnisher to civil liability under 15 U.S.C. § 1681n and § 1681o.
+
+Please direct all correspondence to my current address on file.
+
+Sincerely,
+
+${client.firstName} ${client.lastName}
+Date of Birth: ${client.dateOfBirth}
+SSN: ****
+Current Address: ${client.currentAddress}
+
+─────────────────────────────────────────────────────────────
+Direct furnisher notice pursuant to 15 U.S.C. § 1681s-2(b) | 15 U.S.C. § 1681n
+Credit Wizard AI — Generated ${todayShort()}
+`;
+
+  return body;
+}
+
+// Letter 0: Reinsertion Notice Letter — FCRA § 1681i(a)(5)(B)(ii)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function reinsertionNoticeLetter(request: LetterRequest): string {
+  const { client, tradeline, bureau, caseFile } = request;
+  const furnisher = getCreditorName(tradeline);
+
+  const exhibits: string[] = [
+    "Prior deletion notice or dispute correspondence confirming original deletion",
+    "Credit report showing reinsertion of previously deleted account",
+    "Supporting documentation for the original dispute",
+  ];
+
+  const subject = `NOTICE OF VIOLATION — REINSERTION WITHOUT NOTICE | FCRA § 1681i(a)(5)(B)(ii)\nAccount: ${safeMask(tradeline.accountNumberMasked)} | Creditor: ${furnisher}`;
+
+  let body = buildHeader(bureau, caseFile, tradeline, subject, exhibits);
+
+  body += `NOTICE OF VIOLATION — REINSERTION OF PREVIOUSLY DELETED INFORMATION
+Fair Credit Reporting Act § 1681i(a)(5)(B)(ii) | 5-Business-Day Notice Requirement
+
+Dear Sir or Madam:
+
+I am writing to formally notify ${BUREAU_ADDRESSES[bureau].name} ("Bureau") of a violation of the Fair Credit Reporting Act arising from the reinsertion of an account that was previously deleted from my consumer credit file following a reinvestigation under 15 U.S.C. § 1681i.
+
+──────────────────────────────────────────────────
+BACKGROUND — PRIOR DELETION
+──────────────────────────────────────────────────
+
+The above-referenced account was previously deleted from my credit file pursuant to a reinvestigation conducted under 15 U.S.C. § 1681i. The deletion was completed after the Bureau determined the information was inaccurate, incomplete, or unverifiable, or after the furnisher failed to respond within the required reinvestigation period.
+
+The account was subsequently and without prior written notice to me, reinserted into my consumer credit file.
+
+──────────────────────────────────────────────────
+LEGAL VIOLATION — FCRA § 1681i(a)(5)(B)(ii)
+──────────────────────────────────────────────────
+
+Pursuant to 15 U.S.C. § 1681i(a)(5)(B)(ii), when a consumer reporting agency reinserts information that was previously deleted pursuant to a reinvestigation, the agency shall:
+
+1. Notify the consumer in writing within five (5) business days of the reinsertion; and
+2. Include in that notice the furnisher's stated reason for reinsertion as reported under § 1681s-2(b)(1)(D).
+
+The Bureau has failed to provide the required five (5) business day written notice and has failed to provide the furnisher's stated reason for reinsertion. This failure constitutes an independent violation of the Fair Credit Reporting Act.
+
+──────────────────────────────────────────────────
+DEMAND FOR NOTICE AND REASON FOR REINSERTION
+──────────────────────────────────────────────────
+
+I hereby demand that the Bureau:
+
+1. Provide written notice of the reinsertion within five (5) business days of this letter, if not already provided;
+2. Disclose the furnisher's stated reason for reinsertion pursuant to § 1681s-2(b)(1)(D);
+3. Confirm whether the reinsertion complies with the requirements of 15 U.S.C. § 1681i(a)(5)(B)(ii);
+4. If the reinsertion does not comply, delete the information again and provide written confirmation.
+
+──────────────────────────────────────────────────
+NOTICE OF POTENTIAL CIVIL LIABILITY
+──────────────────────────────────────────────────
+
+NOTICE OF POTENTIAL CIVIL LIABILITY: Pursuant to 15 U.S.C. § 1681n, any consumer reporting agency or furnisher that willfully fails to comply with its obligations under the Fair Credit Reporting Act with respect to the consumer's credit file may be liable to the consumer for statutory damages of not less than $100 and not more than $1,000 per violation, together with attorney's fees and costs, and where willful, punitive damages. The consumer hereby puts the recipient on notice of potential liability for continued failure to comply with federal law.
+
+The consumer reserves the right to seek statutory damages of not less than $100 and not more than $1,000 per violation for each day of continued noncompliance with the reinsertion notice requirements of 15 U.S.C. § 1681i(a)(5)(B)(ii).
+
+──────────────────────────────────────────────────
+
+`;
+
+  body += buildDeclaration(client);
+  body += buildExhibits(exhibits);
+
+  body += `This letter constitutes formal notice of a violation of 15 U.S.C. § 1681i(a)(5)(B)(ii) and a demand for compliance with the five (5) business day reinsertion notice requirement. The consumer reserves all rights and remedies available under 15 U.S.C. § 1681n and § 1681o.
+
+Sincerely,
+
+${client.firstName} ${client.lastName}
+Date of Birth: ${client.dateOfBirth}
+SSN: ****
+Current Address: ${client.currentAddress}
+
+─────────────────────────────────────────────────────────────
+Reinsertion notice pursuant to FCRA § 1681i(a)(5)(B)(ii) | 15 U.S.C. § 1681n
+Credit Wizard AI — Generated ${todayShort()}
+`;
+
+  return body;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Letter 1: Bureau Dispute Letter — FCRA § 611
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -243,6 +435,8 @@ SUPPORTING DOCUMENTATION
 
 I have attached a copy of my credit report with the disputed item identified, along with supporting documentation relevant to this dispute. Under 15 U.S.C. § 1681g, I am entitled to receive all information in my consumer file, including the sources of any information reported to the Bureau.
 
+NOTICE: A "verification" response that consists solely of the furnisher's statement without any indication that the credit reporting agency independently reviewed the consumer's submitted evidence does not constitute a "reasonable reinvestigation" under 15 U.S.C. § 1681i and CFPB Interpretive Rule (81 FR 41032, June 24, 2016).
+
 ──────────────────────────────────────────────────
 `;
 
@@ -310,11 +504,15 @@ I have submitted or will submit an identity theft report documenting my status a
 LEGAL BASIS — FCRA § 605B / 15 U.S.C. § 1681c-2
 ──────────────────────────────────────────────────
 
-Under 15 U.S.C. § 1681c-2(a)(1), a consumer may submit an identity theft report to a consumer reporting agency requesting a block of information in the consumer's credit file that resulted from identity theft. Upon receipt of a valid identity theft report and the consumer's identification of the information to be blocked, the agency shall block the information from the consumer's file.
+Under 15 U.S.C. § 1681c-2(a)(1), a consumer may submit an identity theft report to a consumer reporting agency requesting a block of information in the consumer's credit file that resulted from identity theft. Upon receipt of a valid identity theft report and the consumer's identification of the information to be blocked, the agency shall block the information from the consumer's file within four (4) business days pursuant to 15 U.S.C. § 1681c-2(a)(1).
 
-Pursuant to 15 U.S.C. § 1681c-2(a)(2), the Bureau must also notify the furnisher that the information has been blocked as identity theft information, and the furnisher is prohibited from re-reporting such information.
+Pursuant to 15 U.S.C. § 1681c-2(a)(2), the Bureau must also notify the furnisher that the information has been blocked as identity theft information, and the furnisher is prohibited from re-reporting such information to any consumer reporting agency.
 
-Under 15 U.S.C. § 1681c-2(c), if the Bureau determines that the information resulted from identity theft, the agency shall promptly delete the information and may not reinsert it without compliance with the requirements of 15 U.S.C. § 1681c-2.
+Pursuant to 15 U.S.C. § 1681c-2(c), if the Bureau determines that the information resulted from identity theft, the agency shall promptly delete the information and may not reinsert it without compliance with the requirements of 15 U.S.C. § 1681c-2.
+
+The furnisher of the blocked information is obligated under 15 U.S.C. § 1681s-2(a)(3) not to re-report to any consumer reporting agency any information that the furnisher knows or has reason to know is blocked as identity theft information. If this blocked information is re-reported by the furnisher, that re-reporting constitutes an independent FCRA violation.
+
+In the event that the Bureau removes this block for any reason, the consumer hereby demands re-notification in writing and retains the right to demand reinstatement of the block upon submission of a new identity theft report. The consumer's rights under 15 U.S.C. § 1681c-2 are not extinguished by the removal of a block; a new identity theft report shall serve as a new basis for blocking.
 
 Under 15 U.S.C. § 1681c-2(e), the Bureau may not charge a fee for receiving an identity theft report or for blocking information pursuant to this section.
 
@@ -440,6 +638,8 @@ Under 15 U.S.C. § 1681s-2(b)(1)(D), if the furnisher finds that the information
 
 Under 15 U.S.C. § 1681s-2(b)(1)(E), if the furnisher determines that the information is accurate and complete, the furnisher shall notify the consumer in writing of the determination and the reason for the determination, including the specific records and documents relied upon.
 
+NOTICE: A "verification" response that consists solely of the furnisher's statement without any indication that the credit reporting agency independently reviewed the consumer's submitted evidence does not constitute a "reasonable reinvestigation" under 15 U.S.C. § 1681i and CFPB Interpretive Rule (81 FR 41032, June 24, 2016).
+
 ──────────────────────────────────────────────────
 REQUEST FOR INVESTIGATION AND CORRECTION
 ──────────────────────────────────────────────────
@@ -550,7 +750,9 @@ The reporting of this account raises questions of ownership or identity that ${B
 LEGAL BASIS — FCRA § 611 / 15 U.S.C. § 1681i
 ──────────────────────────────────────────────────
 
-Pursuant to 15 U.S.C. § 1681i(a)(1)(A), the Bureau is required to conduct a reasonable reinvestigation of disputed information upon receiving a dispute from a consumer. When contradictions exist across bureaus and between bureaus and source documents, the Bureau cannot satisfy its reinvestigation obligation by simply re-verifying the disputed item without investigating and addressing the contradiction.
+Pursuant to 15 U.S.C. § 1681i(a)(1)(A), the Bureau is required to conduct a reasonable reinvestigation of disputed information upon receiving a dispute from a consumer. When contradictions exist across bureaus and between bureaus and source documents, the Bureau cannot satisfy its reinvestigation obligation by simply re-verifying the disputed item without investigating and addressing the contradiction. Specifically, if ${BUREAU_ADDRESSES[bureau].name} has verified this account while another bureau has deleted or failed to verify it, the reinvestigation was not reasonable within the meaning of 15 U.S.C. § 1681i.
+
+NOTICE: A "verification" response that consists solely of the furnisher's statement without any indication that the credit reporting agency independently reviewed the consumer's submitted evidence does not constitute a "reasonable reinvestigation" under 15 U.S.C. § 1681i and CFPB Interpretive Rule (81 FR 41032, June 24, 2016). If the reinvestigation was conducted solely by forwarding the dispute to the furnisher without independent review of the evidence submitted herein, such "verification" is not in compliance with federal law.
 
 Under 15 U.S.C. § 1681i(a)(5)(B), if information is found to be inaccurate, incomplete, or unverifiable, the Bureau must correct or delete the information. A verified-but-contradicted item cannot be considered accurate and complete within the meaning of the FCRA.
 
@@ -708,14 +910,24 @@ I respectfully request that the CFPB:
 4. Confirm resolution in writing to me and to the CFPB complaint portal.
 
 ──────────────────────────────────────────────────
+NOTICE OF POTENTIAL CIVIL LIABILITY
+──────────────────────────────────────────────────
+
+NOTICE OF POTENTIAL CIVIL LIABILITY: Pursuant to 15 U.S.C. § 1681n, any consumer reporting agency or furnisher that willfully fails to comply with its obligations under the Fair Credit Reporting Act with respect to the consumer's credit file may be liable to the consumer for statutory damages of not less than $100 and not more than $1,000 per violation, together with attorney's fees and costs, and where willful, punitive damages. The consumer hereby puts the recipient on notice of potential liability for continued failure to comply with federal law.
+
+──────────────────────────────────────────────────
 `;
 
   body += buildDeclaration(client);
   body += buildExhibits(exhibits);
 
-  body += `I declare under penalty of perjury that the foregoing is true and correct to the best of my knowledge.
+  body += `This complaint is submitted through the CFPB's consumer complaint portal at https://www.consumerfinance.gov/complaint/ and via this written escalation letter. I reserve all rights and remedies available under the Fair Credit Reporting Act and applicable state law.
 
-This complaint is submitted through the CFPB's consumer complaint portal at https://www.consumerfinance.gov/complaint/ and via this written escalation letter. I reserve all rights and remedies available under the Fair Credit Reporting Act and applicable state law.
+──────────────────────────────────────────────────
+CONSUMER'S RIGHTS PRESERVED
+──────────────────────────────────────────────────
+
+CONSUMER'S RIGHTS PRESERVED: The consumer hereby acknowledges and preserves all rights available under federal law, including but not limited to the right to file a civil action in federal district court pursuant to 15 U.S.C. § 1681p for any willful or negligent violation of the Fair Credit Reporting Act by any party failing to comply with its obligations under 15 U.S.C. § 1681i or § 1681s-2.
 
 Sincerely,
 
@@ -793,6 +1005,7 @@ The Bureau has violated the following provisions of the Fair Credit Reporting Ac
 • 15 U.S.C. § 1681i(a)(1)(A) — Failure to conduct a reasonable reinvestigation;
 • 15 U.S.C. § 1681i(a)(5)(B) — Failure to delete inaccurate or unverifiable information after reinvestigation;
 • 15 U.S.C. § 1681i(a)(2) — Failure to properly notify the furnisher of the dispute;
+• 15 U.S.C. § 1681i(a)(5)(B)(ii) — Failure to provide five business-day notice of reinsertion of previously deleted information;
 • 15 U.S.C. § 1681i(c) — Failure to prevent unlawful reinsertion of deleted information.
 
 Response defects identified: ${tradeline.responseDefects.length > 0 ? tradeline.responseDefects.join("; ") : "None formally classified."}
@@ -840,6 +1053,12 @@ I respectfully request that your office:
   body += buildExhibits(exhibits);
 
   body += `I declare under penalty of perjury that the foregoing is true and correct to the best of my knowledge. I reserve all rights and remedies available under the Fair Credit Reporting Act, applicable ${stateCode} state law, and applicable consumer protection statutes.
+
+──────────────────────────────────────────────────
+CONSUMER'S RIGHTS PRESERVED
+──────────────────────────────────────────────────
+
+CONSUMER'S RIGHTS PRESERVED: The consumer hereby acknowledges and preserves all rights available under federal law, including but not limited to the right to file a civil action in federal district court pursuant to 15 U.S.C. § 1681p for any willful or negligent violation of the Fair Credit Reporting Act by any party failing to comply with its obligations under 15 U.S.C. § 1681i or § 1681s-2.
 
 Sincerely,
 
@@ -992,6 +1211,14 @@ If this demand is not satisfied within thirty (30) days of the date of this lett
 
 This notice is given in good faith and with the intention of achieving resolution without litigation. However, my silence or inaction after thirty days will be treated as a refusal to remedy, and I will proceed accordingly.
 
+──────────────────────────────────────────────────
+CONSUMER'S RIGHTS PRESERVED
+──────────────────────────────────────────────────
+
+CONSUMER'S RIGHTS PRESERVED: The consumer hereby acknowledges and preserves all rights available under federal law, including but not limited to the right to file a civil action in federal district court pursuant to 15 U.S.C. § 1681p for any willful or negligent violation of the Fair Credit Reporting Act by any party failing to comply with its obligations under 15 U.S.C. § 1681i or § 1681s-2.
+
+──────────────────────────────────────────────────
+
 Sincerely,
 
 ${client.firstName} ${client.lastName}
@@ -1132,6 +1359,12 @@ Governing Law: Federal Arbitration Act, FCRA, and applicable state law
 
 This arbitration demand is made without prejudice to any other rights and remedies available at law or in equity. I reserve the right to supplement this packet and to amend my claims as discovery proceeds.
 
+──────────────────────────────────────────────────
+CONSUMER'S RIGHTS PRESERVED
+──────────────────────────────────────────────────
+
+CONSUMER'S RIGHTS PRESERVED: The consumer hereby acknowledges and preserves all rights available under federal law, including but not limited to the right to file a civil action in federal district court pursuant to 15 U.S.C. § 1681p for any willful or negligent violation of the Fair Credit Reporting Act by any party failing to comply with its obligations under 15 U.S.C. § 1681i or § 1681s-2.
+
 Sincerely,
 
 ${client.firstName} ${client.lastName}
@@ -1172,6 +1405,11 @@ export function generateLetter(request: LetterRequest): string {
   if (tradeline.knownAccurate === true) {
     // Do not generate any letter for this tradeline
     return "";
+  }
+
+  // ── Reinsertion Notice: triggered by responseClass === "reinserted" ─────────
+  if (tradeline.responseClass === "reinserted") {
+    return reinsertionNoticeLetter(request);
   }
 
   // ── Stage routing with hard stop overrides ─────────────────────────────────
@@ -1250,6 +1488,8 @@ export {
   bureauDisputeLetter,
   identityTheftBlockLetter,
   directFurnisherLetter,
+  furnisherDirectNoticeLetter,
+  reinsertionNoticeLetter,
   contradictionLetter,
   cfpbEscalationLetter,
   stateAGLetter,
